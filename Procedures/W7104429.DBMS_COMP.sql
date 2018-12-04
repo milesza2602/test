@@ -18,6 +18,8 @@ as
    g_recs_updated       integer       :=  0;
    g_recs_dropped       integer       :=  0;
 
+-- Made another change. Miles going wild - 20181204
+
    c                    integer;
 
    consistent    BOOLEAN;
