@@ -1,4 +1,5 @@
 -- ****** Object: Procedure W7104429.DBMS_COMP Script Date: 04/12/2018 11:29:27 AM ******
+-- Testing --
 CREATE OR REPLACE PROCEDURE "DBMS_COMP"  (l_owner in varchar2, l_table_name in varchar2, L_CLIST in varchar2) authid  current_user    --definer as  --
 as
 
