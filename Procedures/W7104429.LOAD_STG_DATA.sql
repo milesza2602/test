@@ -19,6 +19,8 @@ as
   g_recs_updated       integer       :=  0;
 
 BEGIN
+
+-- comment added to test alerts --
     select substr(to_char(today_date,'DAY'),1,2)||to_char(today_date, 'DD')       into l_pfx    from dim_control;
     select substr(to_char(today_date-14,'DAY'),1,2)||to_char(today_date-14, 'DD') into l_pfx2   from dim_control;
 --    select substr(to_char(today_date,'DAY'),1,2)||to_char(today_date, 'DD')||'_' into l_pfx from dim_control;
