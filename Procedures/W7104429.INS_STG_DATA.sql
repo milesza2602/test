@@ -32,6 +32,8 @@ as
    PRAGMA EXCEPTION_INIT(too_many_attempts, -20300);
 
 BEGIN
+
+-- This comment is added to test check-in policy --
    l_name := l_table_name;
 
    -- DB check
