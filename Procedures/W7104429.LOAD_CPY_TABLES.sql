@@ -31,6 +31,8 @@ as
    PRAGMA EXCEPTION_INIT(too_many_attempts, -20300);
 
 BEGIN
+
+-- change test --
    execute immediate 'alter session enable parallel dml';
    l_name := l_table_name;
 --   l_system_name := '';
