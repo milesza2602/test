@@ -29,6 +29,7 @@ as
 
 BEGIN
 --insert into w7104429.sys_dwh_log values (localtimestamp,l_name,l_system_name,l_script_name,l_procedure_name,l_text, c, '001');
+-- This comment was added to see if merge statement picks up differences
 
 --    execute immediate 'alter session set events = ''6512 trace name ERRORSTACK level 3''';
 
