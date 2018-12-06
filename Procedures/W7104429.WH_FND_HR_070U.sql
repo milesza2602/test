@@ -111,6 +111,8 @@ a_stg_input      stg_array;
 --**************************************************************************************************
 -- Process, transform and validate the data read from the input interface
 --**************************************************************************************************
+
+-- and so I added this comment for further testing --
 procedure local_address_variables as
 begin
 
