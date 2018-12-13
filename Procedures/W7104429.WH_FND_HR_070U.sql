@@ -226,6 +226,7 @@ end local_address_variables;
 procedure local_write_hospital as
 begin
 
+-- subprocedure to write to the hospital table --
    g_rec_in.sys_load_date         := sysdate;
    g_rec_in.sys_load_system_name  := 'DWH';
    g_rec_in.sys_process_code      := 'Y';
