@@ -41,6 +41,7 @@ BEGIN
    l_count := 0;
 
    -- for all tables to be done, trunc and insert
+   -- testing checkin
    DBMS_OUTPUT.put_line ('=========================================================');
    DBMS_APPLICATION_INFO.SET_MODULE ('CNT ' || l_count, l_table_name);
 
