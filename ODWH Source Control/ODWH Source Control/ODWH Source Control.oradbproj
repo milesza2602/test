@@ -1,0 +1,1095 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <ProductVersion>18.3.0</ProductVersion>
+    <ProjectTypeGuids>{DEE810A1-2D67-4F8F-8213-24009A18411F};{218574D1-FF94-4b95-8577-A6D58C11C315}</ProjectTypeGuids>
+    <Upgraded>
+    </Upgraded>
+    <ProjectGuid>8a3c0933-0bf6-4d47-923f-8d939907ab1d</ProjectGuid>
+    <DBVERSION>Oracle Database 12.2</DBVERSION>
+    <BUILDOUTPUTPATH>bin</BUILDOUTPUTPATH>
+    <BUILDOUTPUTFILENAME>ODWH Source Control.sql</BUILDOUTPUTFILENAME>
+    <AssemblyName>ODWH Source Control</AssemblyName>
+    <Name>ODWH Source Control</Name>
+    <RootNamespace>ODWH Source Control</RootNamespace>
+    <ImportedSchemas>
+      <ImportedSchema xmlns="">
+        <Name>W7131037</Name>
+      </ImportedSchema>
+    </ImportedSchemas>
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Functions\" />
+    <Folder Include="Packages\" />
+    <Folder Include="Procedures\" />
+    <Folder Include="Procedures\DWH_CUST_FOUNDATION" />
+    <Folder Include="Scripts\" />
+    <!--    <Folder Include="Security\" />
+    <Folder Include="Security\Permissions\" />
+    <Folder Include="Security\Roles\" />
+    <Folder Include="Security\Users\" />  -->
+    <Folder Include="Sequences\" />
+    <Folder Include="Synonyms\" />
+    <Folder Include="Tables\" />
+    <Folder Include="Tables\Relational Tables" />
+    <Folder Include="Tables\Object Tables" />
+    <Folder Include="Tables\XML Tables" />
+    <!--    <Folder Include="User Defined Types\" />
+    <Folder Include="User Defined Types\Nested Tables\" />
+    <Folder Include="User Defined Types\Objects\" />
+    <Folder Include="User Defined Types\VARRAYs\" />  -->
+    <Folder Include="Views\" />
+    <Folder Include="Views\Relational Views" />
+    <Folder Include="Views\Object Views" />
+    <Folder Include="Views\XML Views" />
+    <Folder Include="Views\Materialized Views" />
+    <!--    <Folder Include="XML Schemas\" />
+    <Folder Include="AQ\" />
+    <Folder Include="AQ\Queues\" />
+    <Folder Include="AQ\Queue Tables\" />
+    <Folder Include="Pluggable Databases\" />  -->
+    <Folder Include="Triggers\" />
+    <Folder Include="Triggers\Table Triggers" />
+    <Folder Include="Triggers\View Triggers" />
+    <Folder Include="Triggers\Schema Triggers" />
+    <Folder Include="Triggers\Database Triggers" />
+    <Folder Include="Indexes\" />
+    <DBRefs Include="Database References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.PRC_SELECT_ALL.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.PRC_UPDATE_ITEM_NO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.PRC_UPD_INCLUDE.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_014U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_016U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_018TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_018U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_020TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_020U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_020U_20160211.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_020U_BCK10MAR2016.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_021TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_021U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_022TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_022U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_023U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_024TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_024U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_025TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_025U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_026U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_028U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_030U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_032U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_034U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_036U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_040U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_042U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_044U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_046U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_048U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_050U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_052U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_054U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_056U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_058U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_064U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_066FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_066U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_068U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_072U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_074U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_076U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_100U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_102U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_104U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_106U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_108FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_108LOD.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_108N.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_108U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_108U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_108U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_110FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_110TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_110U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_112U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_113U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_120U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_122U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_124U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_134E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_134E1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_134TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_135U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_140U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_146U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_152TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_152U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_153TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_153U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_154TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_154U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_156U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_157BU.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_157U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_157_0410.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_157_0510.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_159U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_162U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_165U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_167U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_167U_HIST.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_178TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_178U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_180TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_180U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_180U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_200U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_202U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_204U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_206FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_206TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_206U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_210U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_212U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_220U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_221U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_222U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_223U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_225U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_230U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_231U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_232U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_233U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_235U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_240U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_241U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_242U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_243U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_245U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_250U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_251U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_252U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_253U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_255U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_260TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_260U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_262TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_262U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_264TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_264U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_266TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_266TO1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_266U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_267TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_267TO1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_267U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_270BU.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_270U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_271U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_272U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_274U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_276U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_278U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_280U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_281T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_281U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_281U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_282T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_282U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_282U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_283U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_284HST.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_284U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_284U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_287HST.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_287U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_287U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_290BU.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_290U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_290U_HST1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_290U_HST2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_290U_TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_291U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_291U_HST1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_291U_HST2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_291U_RRN.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_291U_TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_292U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_292U_HST1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_292U_HST2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_292U_TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_293U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_293U_HST1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_293U_HST2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_293U_TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_294U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_294U_HST1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_294U_HST2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_294U_TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_295U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_296U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_297U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_298U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_299U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_300BU.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_300TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_300U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_302U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_310FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_310FX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_310TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_310U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_315U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_317U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_318TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_318U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_320U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_322TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_322U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_324BU.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_324TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_324U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_325TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_325U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_326TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_326U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_327BU.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_327TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_327U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_328TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_328U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_329TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_329U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_330TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_330U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_332T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_332U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_333T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_333U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_334T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_334U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_335T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_335U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_336U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_338U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_338U1T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_338U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_338U2T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_339U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_339U1T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_339U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_339U2T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_340U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_340U1T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_340U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_340U2T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_341U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_341U1T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_341U1_V1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_341U1_V2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_341U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_341U2T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_342U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_342U1T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_342U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_342U2T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_343U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_343U1T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_343U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_343U2T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_344U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_344U1T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_344U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_344U2T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_345U1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_345U1T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_345U2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_345U2T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_346U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_347OLD.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_347U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_348A.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_348R.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_348U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_349U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_350U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_351U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_354E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_358E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_358E_T.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_362E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_364E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_365E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_370E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_370E_29JUN16.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_370E_OLD.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_371E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_372E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_373E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_374E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_375E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_376E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_377E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_378E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_379E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_380E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_381E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_382E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_383E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_384E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_400FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_400U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_500U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_502U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_504U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_506U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_508U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_510U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_514U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_516U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_518U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_520U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_530FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_530TO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_530U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_530U_BCK16102015.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_530U_ERR.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_530U_ND.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_530U_WL.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_540U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_550E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_602U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_603U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_604U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_610U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_615U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_999U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_999UX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_ACCEN_2E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_AUX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_AUX_FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_AUX_OL.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_BSKT.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_BSKT_FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_BSKT_OL.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_DB1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_DB2.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_DB3.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_DB5.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_DB8.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_DB_TRIAL1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_E20_1E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_E20_2E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_E20_3E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_E20_4E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_E20_5E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_E20_6E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_E20_7E.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_ITEM.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_ITEM_FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_ITEM_OL.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_ITEM_WK.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_ITEM_WK1.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_THEO.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_TNDR.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_TNDR_FIX.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_CUST_TNDR_OL.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_NRT_001U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_NRT_002OLD.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WH_PRF_NRT_002U.sql">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Procedures\DWH_CUST_FOUNDATION\W7131037.WW_DO_TRUNC.sql">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
+</Project>
