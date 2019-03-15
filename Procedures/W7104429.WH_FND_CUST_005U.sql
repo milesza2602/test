@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE "WH_FND_CUST_005U" (p_forall_limit in integer,p_succ
 --  Packages:    constants, dwh_log, dwh_valid
 --
 --  Maintenance:
---
+--  Added comment to test releases
 --
 -- Note: This version Attempts to do a bulk insert / update / hospital. Downside is that hospital message is generic!!
 --       This would be appropriate for large loads where most of the data is for Insert like with Sales transactions.
