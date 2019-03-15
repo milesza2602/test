@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE "WH_FND_HR_070U" (p_forall_limit in integer,p_succes
 --
 --  Maintenance:
 --  Lwazi Ntloko
-
+--  Added comments as a test
 
 --  Naming conventions
 --  g_  -  Global variable
