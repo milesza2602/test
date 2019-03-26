@@ -14,6 +14,10 @@ CREATE OR REPLACE PROCEDURE "WH_FND_HR_070U" (p_forall_limit in integer,p_succes
 --  Maintenance:
 --  Lwazi Ntloko
 
+-- Why won't changes merge
+--  Added comments as a test
+
+-- Added a comment to test check-in
 
 --  Naming conventions
 --  g_  -  Global variable
