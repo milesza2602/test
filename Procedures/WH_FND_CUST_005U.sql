@@ -44,7 +44,7 @@ g_useless_var2		 integer	   :=  0;
 g_retailsoft_customer_no    stg_int_cust_cpy.retailsoft_customer_no%type;
 g_loyalty_card_no           stg_int_cust_cpy.loyalty_card_no%type;
  
-g_date               date          := trunc(sysdate);
+g_date               date          := trunc(sysdate-1);
 
 L_MESSAGE            SYS_DWH_ERRLOG.LOG_TEXT%TYPE;
 l_module_name        sys_dwh_errlog.log_procedure_name%type    := 'WH_FND_CUST_005U';
