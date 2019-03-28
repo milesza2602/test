@@ -15,7 +15,7 @@ set define off;
 --  Packages:    constants, dwh_log, dwh_valid
 --
 --  Maintenance:
---
+--  Add a comment to see if this will run in dev environment
 --
 -- Note: This version Attempts to do a bulk insert / update / hospital. Downside is that hospital message is generic!!
 --       This would be appropriate for large loads where most of the data is for Insert like with Sales transactions.
