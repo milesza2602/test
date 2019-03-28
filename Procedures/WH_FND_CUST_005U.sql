@@ -36,6 +36,7 @@ g_recs_hospital      integer       :=  0;
 g_recs_duplicate     integer       :=  0;
 g_recs_dummy         integer       :=  0;
 g_truncate_count     integer       :=  0;
+g_useless_var		 integer	   :=  0;
 
 
 g_retailsoft_customer_no    stg_int_cust_cpy.retailsoft_customer_no%type;
