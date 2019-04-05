@@ -1,7 +1,7 @@
 --------------------------------------------------------
 --  DDL for Procedure WH_FND_CUST_005U
 --------------------------------------------------------
-set define on;
+set define off;
 
   CREATE OR REPLACE PROCEDURE "DWH_CUST_FOUNDATION"."WH_FND_CUST_005U" (p_forall_limit in integer,p_success out boolean) as
 
@@ -351,3 +351,5 @@ begin
        p_success := false;
        RAISE;
 end wh_fnd_cust_005u;
+/
+show errors
