@@ -2,6 +2,7 @@
 --  DDL for Procedure WH_FND_CUST_005U
 --------------------------------------------------------
 set define off;
+SET AUTOCOMMIT ON;
 
   CREATE OR REPLACE PROCEDURE "DWH_CUST_FOUNDATION"."WH_FND_CUST_005U" (p_forall_limit in integer,p_success out boolean) as
 
