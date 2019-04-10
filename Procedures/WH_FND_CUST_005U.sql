@@ -6,31 +6,7 @@ SET AUTOCOMMIT ON;
 
   CREATE OR REPLACE PROCEDURE "DWH_CUST_FOUNDATION"."WH_FND_CUST_005U" (p_forall_limit in integer,p_success out boolean) as
 
---**************************************************************************************************
---  Date:        JULY 2016
---  Author:      Alastair de Wet
---  Purpose:     Create CUSTOMER MASTER fact table in the foundation layer
---               with input ex staging table from AFRICA.
---  Tables:      Input  - stg_int_cust_cpy
---               Output - fnd_int_customer
---  Packages:    constants, dwh_log, dwh_valid
---
---  Maintenance:
---  Add a comment to see if this will run in dev environment
---  Add another comment for sanity check
--- Testing
---
--- Note: This version Attempts to do a bulk insert / update / hospital. Downside is that hospital message is generic!!
---       This would be appropriate for large loads where most of the data is for Insert like with Sales transactions.
---       Updates however are also a lot faster that on the original template.
---  Naming conventions
---  g_  -  Global variable
---  l_  -  Log table variable
---  a_  -  Array variable
---  v_  -  Local variable as found in packages
---  p_  -  Parameter
---  c_  -  Prefix to cursor
---**************************************************************************************************
+
 
 g_recs_read          integer       :=  0;
 g_recs_updated       integer       :=  0;
