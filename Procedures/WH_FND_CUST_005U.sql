@@ -1,11 +1,30 @@
---------------------------------------------------------
---  DDL for Procedure WH_FND_CUST_005U
---------------------------------------------------------
-set define off;
-SET AUTOCOMMIT ON;
+set define off
 
-  CREATE OR REPLACE PROCEDURE "DWH_CUST_FOUNDATION"."WH_FND_CUST_005U" (p_forall_limit in integer,p_success out boolean) as
+create or replace PROCEDURE                                                                                                                    "WH_FND_CUST_005U"      (p_forall_limit in integer,p_success out boolean) as
 
+--**************************************************************************************************
+--  Date:        JULY 2016
+--  Author:      Alastair de Wet
+--  Purpose:     Create CUSTOMER MASTER fact table in the foundation layer
+--               with input ex staging table from AFRICA.
+--  Tables:      Input  - stg_int_cust_cpy
+--               Output - fnd_int_customer
+--  Packages:    constants, dwh_log, dwh_valid
+--
+--  Maintenance:
+--
+--
+-- Note: This version Attempts to do a bulk insert / update / hospital. Downside is that hospital message is generic!!
+--       This would be appropriate for large loads where most of the data is for Insert like with Sales transactions.
+--       Updates however are also a lot faster that on the original template.
+--  Naming conventions
+--  g_  -  Global variable
+--  l_  -  Log table variable
+--  a_  -  Array variable
+--  v_  -  Local variable as found in packages
+--  p_  -  Parameter
+--  c_  -  Prefix to cursor
+--**************************************************************************************************
 
 g_recs_read          integer       :=  0;
 g_recs_updated       integer       :=  0;
@@ -14,14 +33,12 @@ g_recs_hospital      integer       :=  0;
 g_recs_duplicate     integer       :=  0;
 g_recs_dummy         integer       :=  0;
 g_truncate_count     integer       :=  0;
-g_useless_var		 integer	   :=  0;
-g_useless_var2		 integer	   :=  0;
 
 
 g_retailsoft_customer_no    stg_int_cust_cpy.retailsoft_customer_no%type;
 g_loyalty_card_no           stg_int_cust_cpy.loyalty_card_no%type;
  
-g_date               date          := trunc(sysdate-1);
+g_date               date          := trunc(sysdate);
 
 L_MESSAGE            SYS_DWH_ERRLOG.LOG_TEXT%TYPE;
 l_module_name        sys_dwh_errlog.log_procedure_name%type    := 'WH_FND_CUST_005U';
