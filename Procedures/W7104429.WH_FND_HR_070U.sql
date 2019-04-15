@@ -1,4 +1,5 @@
--- ****** Object: Procedure W7104429.WH_FND_HR_070U Script Date: 04/12/2018 11:29:27 AM ******
+set define off
+
 CREATE OR REPLACE PROCEDURE "WH_FND_HR_070U" (p_forall_limit in integer,p_success out boolean) as
 
 --************************************************************************************************
@@ -41,6 +42,8 @@ g_hospital_text      dwh_hr_foundation.STG_HR_PS_EMPLOYEE_HSP.sys_process_msg%ty
 g_rec_out            dwh_hr_foundation.FND_PS_EMPLOYEE%rowtype;
 g_found              boolean;
 g_valid              boolean;
+
+/*add to check 2 things. 1) Build gets all changes 2) deplys to Barry's schema*/
 
 --g_date              date          := to_char(sysdate,('dd mon yyyy'));
 g_date               date          := trunc(sysdate);
@@ -538,6 +541,5 @@ begin
 
 
 END "WH_FND_HR_070U";
-
-
 /
+show errors
