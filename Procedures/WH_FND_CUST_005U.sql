@@ -1,6 +1,6 @@
 set define off
 
-create or replace PROCEDURE                                                                                                                    "WH_FND_CUST_005U"      (p_forall_limit in integer,p_success out boolean) as
+create or replace PROCEDURE                                                                                                                    "DWH_CUST_FUNDATION"."WH_FND_CUST_005U"      (p_forall_limit in integer,p_success out boolean) as
 --**************************************************************************************************
 --  Date:        JULY 2016
 --  Author:      Alastair de Wet
