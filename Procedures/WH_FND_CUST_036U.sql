@@ -20,7 +20,7 @@ set define off;
 --
 --  Maintenance:
 --  08 Sept 2010 - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
---
+--  Added a comment to check my changes
 
 --  Naming conventions
 --  g_  -  Global variable
