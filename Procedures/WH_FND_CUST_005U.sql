@@ -25,6 +25,7 @@ create or replace PROCEDURE                                                     
 --  c_  -  Prefix to cursor
 --  Add this comment to check the web portal checkins
 --  Add another comment to check release
+--  Changes not reflecting on the database
 --**************************************************************************************************
 
 
