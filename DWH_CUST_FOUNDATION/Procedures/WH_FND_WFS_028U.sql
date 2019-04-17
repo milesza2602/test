@@ -17,7 +17,7 @@ set define off;
 --
 --  Maintenance:
 --  08 Sept 2010 - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
---
+--  Add a comment to check build
 
 --  Naming conventions
 --  g_  -  Global variable
