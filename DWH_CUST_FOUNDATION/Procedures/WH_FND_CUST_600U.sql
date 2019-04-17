@@ -18,6 +18,7 @@ set define off;
 -- 2
 -- 3
 -- 4
+-- 5
 -- Note: This version Attempts to do a bulk insert / update / hospital. Downside is that hospital message is generic!!
 --       This would be appropriate for large loads where most of the data is for Insert like with Sales transactions.
 --       Updates however are also a lot faster that on the original template.
