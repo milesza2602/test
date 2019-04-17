@@ -20,6 +20,7 @@ set define off;
 --  add another comment to check the build
 --  add comment
 --- Test
+--- Test
 
 --  Naming conventions
 --  g_  -  Global variable
