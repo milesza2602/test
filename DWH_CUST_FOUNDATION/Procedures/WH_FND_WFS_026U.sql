@@ -19,6 +19,7 @@ set define off;
 --  08 Sept 2010 - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 --  add another comment to check the build
 --  add comment
+--- Test
 
 --  Naming conventions
 --  g_  -  Global variable
