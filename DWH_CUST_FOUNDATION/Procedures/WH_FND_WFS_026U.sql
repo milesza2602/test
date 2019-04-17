@@ -418,3 +418,5 @@ begin
        raise;
 
 END WH_FND_WFS_026U;
+/
+show errors
