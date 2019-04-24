@@ -15,7 +15,7 @@ set define off;
 --  Packages:    constants, dwh_log, dwh_valid
 --
 --  Maintenance:
---
+--  add a change as a test to see if previous build will process previous change
 --
 -- Note: This version Attempts to do a bulk insert / update
 --       This would be appropriate for large loads where most of the data is for Insert like with Sales transactions.
@@ -243,3 +243,5 @@ begin
        p_success := false;
        raise;
 end wh_prf_cust_052u;
+/
+show errors
