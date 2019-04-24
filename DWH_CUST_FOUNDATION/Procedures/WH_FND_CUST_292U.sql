@@ -16,7 +16,7 @@ set define off;
 --
 --  Maintenance:
 --  08 Sept 2010 - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
---
+--  added change for testing mdm
 --
 --
 -- Note: This version Attempts to do a bulk insert / update / hospital. Downside is that hospital message is generic!!
