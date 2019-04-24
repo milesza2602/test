@@ -243,5 +243,3 @@ begin
        p_success := false;
        raise;
 end wh_prf_cust_052u;
-/
-show errors
