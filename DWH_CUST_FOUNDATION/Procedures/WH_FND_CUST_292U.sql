@@ -341,5 +341,3 @@ begin
        p_success := false;
        RAISE;
 end WH_FND_CUST_292U;
-/
-show errors
