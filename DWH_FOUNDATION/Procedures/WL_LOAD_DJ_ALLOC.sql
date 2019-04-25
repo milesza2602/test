@@ -16,6 +16,7 @@ set define off;
 --  v_  -  Local variable as found in packages
 --  p_  -  Parameter
 --  c_  -  Prefix to cursor
+--  just checking
 --**************************************************************************************************
 g_forall_limit       integer       :=  10000;
 g_recs_read          integer       :=  0;
