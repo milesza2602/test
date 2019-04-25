@@ -1,0 +1,546 @@
+--------------------------------------------------------
+--  DDL for Procedure WH_PRF_S4S_004A_TAKEON
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "DWH_PERFORMANCE"."WH_PRF_S4S_004A_TAKEON" (
+   p_forall_limit   IN     INTEGER,
+   p_success           OUT BOOLEAN)
+AS
+   --**************************************************************************************************
+    -- copy of wh_prf_s4s_004a - taken on 6/oct/2014 before code to change aviability to cycle
+    --**************************************************************************************************
+   --  Date:        July 2014
+   --  Author:      Wendy lyttle
+   --  Purpose:     Load EMPLOYEE_LOCATION_DAY  information for Scheduling for Staff(S4S)
+   --
+   --               Note that eventhough we will only use a subset of this data (next proc to run wh_prf_s4s_4u)
+   --                we generate all days within each period
+   --
+   --  Tables:      Input    - dwh_foundation.FND_S4S_emp_avail_DY
+   --               Output   - dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part1, 
+   --                          dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2
+   --  Packages:    dwh_constants, dwh_log, dwh_valid
+   --
+   --  Maintenance:
+   --  Change using example employee_id = to test
+   --  allows for generating all weeks but then removing weeks no required 
+   --
+   --  Naming conventions
+   --  g_  -  Global variable
+   --  l_  -  Log table variable
+   --  a_  -  Array variable
+   --  v_  -  Local variable as found in packages
+   --  p_  -  Parameter
+   --  c_  -  Prefix to cursor
+   --**************************************************************************************************
+   g_forall_limit     INTEGER := dwh_constants.vc_forall_limit;
+   g_recs_read        INTEGER := 0;
+   g_recs_inserted    INTEGER := 0;
+   g_recs_updated     INTEGER := 0;
+   g_recs    INTEGER := 0;
+   g_recs_tbc         INTEGER := 0;
+   g_error_count      NUMBER := 0;
+   g_error_index      NUMBER := 0;
+   g_count            NUMBER := 0;
+   g_rec_out          RTL_EMP_AVAIL_LOC_JOB_DY%ROWTYPE;
+   g_found            BOOLEAN;
+   g_date             DATE;
+   g_SUB      NUMBER := 0;
+   g_end_date             DATE;
+g_start_date date;
+g_end_sub number;
+
+
+
+      l_message sys_dwh_errlog.log_text%TYPE;
+      l_module_name sys_dwh_errlog.log_procedure_name%TYPE := 'WH_PRF_S4S_004A_TAKEON';
+      l_name sys_dwh_log.log_name%TYPE                     := dwh_constants.vc_log_name_rtl_md;
+      l_system_name sys_dwh_log.log_system_name%TYPE       := dwh_constants.vc_log_system_name_rtl_prf;
+      l_script_name sys_dwh_log.log_script_name%TYPE       := dwh_constants.vc_log_script_rtl_prf_md;
+      l_procedure_name sys_dwh_log.log_procedure_name%TYPE := l_module_name;
+      l_text sys_dwh_log.log_text%TYPE;
+      l_description sys_dwh_log_summary.log_description%TYPE   := 'LOAD THE RTL_EMP_AVAIL_LOC_JOB_DY data  EX FOUNDATION';
+      l_process_type sys_dwh_log_summary.log_process_type%TYPE := dwh_constants.vc_log_process_type_n;
+      -- For output arrays into bulk load forall statements --
+      TYPE tbl_array_i
+      IS
+        TABLE OF RTL_EMP_AVAIL_LOC_JOB_DY%ROWTYPE INDEX BY BINARY_INTEGER;
+      TYPE tbl_array_u
+      IS
+        TABLE OF RTL_EMP_AVAIL_LOC_JOB_DY%ROWTYPE INDEX BY BINARY_INTEGER;
+        a_tbl_insert tbl_array_i;
+        a_tbl_update tbl_array_u;
+        a_empty_set_i tbl_array_i;
+        a_empty_set_u tbl_array_u;
+        a_count   INTEGER := 0;
+        a_count_i INTEGER := 0;
+        a_count_u INTEGER := 0;
+
+ --**************************************************************************************************
+-- Main process
+--**************************************************************************************************
+begin
+    if p_forall_limit is not null and p_forall_limit > dwh_constants.vc_forall_minimum then
+       g_forall_limit := p_forall_limit;
+    end if;
+    p_success := false;
+    l_text := dwh_constants.vc_log_draw_line;
+    dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
+    l_text := 'LOAD OF RTL_EMP_CONSTR_WK  EX FOUNDATION STARTED '||
+    to_char(sysdate,('dd mon yyyy hh24:mi:ss'));
+    dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
+    dwh_log.insert_log_summary(l_name,l_system_name,l_script_name,l_procedure_name,l_description,
+    l_process_type,dwh_constants.vc_log_started,'','','','','');
+
+--**************************************************************************************************
+-- Look up batch date from dim_control
+--**************************************************************************************************
+    dwh_lookup.dim_control(g_date);
+
+
+-- hardcoding batch_date for testing
+--
+--g_date := '7 dec 2014';
+
+    l_text := 'BATCH DATE BEING PROCESSED IS:- '||g_date;
+    dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
+
+       select distinct this_week_start_date + 20
+   into g_end_date
+   from dim_calendar where calendar_date = g_date;
+
+
+-- g_end_date := '7 dec 2014';
+-- g_date := '16 nov 2014';
+
+    l_text := 'BATCH DATE BEING PROCESSED - '||g_end_date;
+    dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
+
+    execute immediate 'alter session set workarea_size_policy=manual';
+    execute immediate 'alter session set sort_area_size=100000000';
+    execute immediate 'alter session enable parallel dml';
+
+---------------------------------------------------------------
+--
+-- STEP 1 : truncate table dwh_performance.temp_S4S_FND_AVAIL_CYCLE_DATES
+--
+---------------------------------------------------------------
+      g_recs_inserted := 0;
+
+      l_text := 'TRUNCATE TABLE  dwh_performance.temp_S4S_LOC_EMP_DY_part1';
+      dwh_log.write_log (l_name, l_system_name, l_script_name,l_procedure_name, l_text);
+      EXECUTE IMMEDIATE('TRUNCATE TABLE dwh_performance.temp_S4S_LOC_EMP_DY_part1');
+---------------------------------------------------------------
+--
+-- STEP 2 : insert into dwh_performance.temp_S4S_LOC_EMP_DY_part1
+--        : Eventhough there are rules pertaining to selection/forecatsing/processing periods
+--            for this procedure we generate all data from cycle_start_date through to current_date+21days
+--        : Filtering will be done later
+--
+---------------------------------------------------------------
+     for v_cur in (
+                        select  /*+ full(fnd) parallel(fnd,6) */   employee_id
+                              , cycle_start_date
+                              , no_of_weeks
+                              , availability_start_date
+                              , availability_end_date
+                              , count(distinct this_week_start_date)  full_no_of_weeks
+                              , min(this_week_start_date) min_cycle_this_wk_start_dt
+                              , max(this_week_start_date) max_cycle_this_wk_start_dt
+                              , max(this_week_end_date) max_cycle_this_wk_end_dt
+                          FROM dwh_foundation.FND_S4S_emp_avail_DY fnd, dim_calendar dc
+                          where 
+                   --    fnd.employee_id in ('1002436','7089864')
+                   --       and  
+                   -- still need to see if ok ---if left out it will pick-up future_dated records at the right time --    where flr.last_updated_date = g_date
+          ---    fnd.last_updated_date = g_date or
+              dc.calendar_date between fnd.cycle_start_date and g_end_date
+                          group by employee_id
+                                , cycle_start_date
+                                , no_of_weeks
+                                , availability_start_date
+                                , availability_end_date
+                          order by cycle_start_date, availability_start_date
+      ) loop
+      
+            g_start_date := null;
+            g_end_date := v_cur.min_cycle_this_wk_start_dt-1;
+            g_sub := 0;
+            G_END_SUB := round(v_cur.full_no_of_weeks/v_cur.no_of_weeks);
+            
+      for g_sub in 0..G_END_SUB loop
+              g_start_date := g_end_date + 1;
+              g_end_date := g_start_date + (v_cur.no_of_weeks * 7) - 1;
+              
+      insert into dwh_performance.temp_S4S_LOC_EMP_DY_part1
+                         values (v_cur.employee_id
+                          , v_cur.cycle_start_date
+                          , v_cur.no_of_weeks
+                          , v_cur.availability_start_date
+                          , v_cur.availability_end_date
+                          , v_cur.full_no_of_weeks
+                          , v_cur.min_cycle_this_wk_start_dt
+                          , v_cur.max_cycle_this_wk_start_dt
+                          , v_cur.max_cycle_this_wk_end_dt
+                          , g_start_date 
+                          , g_end_date  );
+          g_recs :=SQL%ROWCOUNT ;
+             COMMIT;
+             g_recs_updated := g_recs_updated + g_recs;
+             
+              if g_recs_updated mod 50000 = 0 
+              then 
+                   l_text := 'Recs inserted into   dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part1 = '||g_recs_updated;
+                   dwh_log.write_log (l_name, l_system_name, l_script_name,l_procedure_name, l_text);
+           end if;
+             
+    
+          END LOOP;
+       
+       end loop;
+    l_text := 'Recs inserted into   dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part1 = '||g_recs_inserted;
+    dwh_log.write_log (l_name, l_system_name, l_script_name,l_procedure_name, l_text);
+
+
+---------------------------------------------------------------
+--
+-- STEP 3 : truncate table TEMP_S4S_LOC_EMP_DY_part2
+--
+---------------------------------------------------------------
+      g_recs_inserted := 0;
+
+      l_text := 'TRUNCATE TABLE  dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2';
+      dwh_log.write_log (l_name, l_system_name, l_script_name,l_procedure_name, l_text);
+
+---------------------------------------------------------------
+--
+-- STEP 4 : Insert into table TEMP_S4S_LOC_EMP_DY_part2
+--
+-- NOTES
+--------
+-- This step creates the list of employees with the following info :
+-- a.) this_week_start_ and end_dates  = for all weeks in each AVAIL_CYCLE_START_DATE/AVAIL_CYCLE_END_DATE period
+-- b.) RNK = numbered sequence starting at 1 for each week within period
+-- /* - don't need this c.) rank_week_number = the sequence of the weeks within period
+--           eg,. if number_of_weeks = 4, then week1 = 0.25, week2 = 0.5, week3 = 0.75 week4 = 1, week5 = 1.25 etc..*/
+--
+---------------------------------------------------------------
+      l_text := 'Starting insert into  dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2';
+      dwh_log.write_log (l_name, l_system_name, l_script_name,l_procedure_name, l_text);
+
+      EXECUTE IMMEDIATE
+         ('TRUNCATE TABLE  dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2');
+    
+ INSERT /*+ APPEND */
+            INTO  dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2
+         WITH selext1
+                          AS (
+                          SELECT /*+ FULL(SC) FULL(FS) PARALLEL(SC,6) PARALLEL(FS,6)  */
+                               DISTINCT        sc.EMPLOYEE_ID,
+                                       ORIG_CYCLE_START_DATE,
+                                       sc.CYCLE_START_DATE,
+                                       sc.CYCLE_end_date,
+                                       fs.NO_OF_WEEKS                 --, dc.calendar_date
+                                                                         --, dc.fin_day_no
+                                                                        --, fs.week_number
+                                       ,
+                                       dc.this_week_start_date,
+                                       dc.this_week_end_date,
+                                       dc.fin_year_no,
+                                       dc.fin_week_no,
+                                       SC.AVAILABILITY_START_DATE,
+                                       SC.AVAILABILITY_end_DATE
+                                  FROM dwh_performance.temp_S4S_LOC_EMP_DY_part1 SC,
+                                       dwh_foundation.FND_S4S_emp_avail_DY FS,
+                                       DIM_CALENDAR DC
+                                 WHERE     SC.EMPLOYEE_ID = FS.EMPLOYEE_ID
+                                       AND SC.AVAILability_START_DATE = FS.AVAILability_START_DATE
+                                        AND SC.ORIG_CYCLE_START_DATE = FS.CYCLE_START_DATE
+                                       AND DC.CALENDAR_DATE BETWEEN SC.CYCLE_START_DATE   AND SC.CYCLE_END_DATE
+                       ORDER BY
+                                       sc.EMPLOYEE_ID,ORIG_CYCLE_START_DATE,
+                                       sc.CYCLE_START_DATE, AVAILABILITY_START_DATE, FIN_YEAR_NO, FIN_WEEK_NO
+                                       )
+                                       ,
+              selext2
+                          AS (  
+                          SELECT
+                                       EMPLOYEE_ID,
+                                       ORIG_CYCLE_START_DATE,
+                                       CYCLE_START_DATE,
+                                       CYCLE_end_date,
+                                       AVAILABILITY_START_DATE,
+                                       AVAILABILITY_end_DATE,
+                                       NO_OF_WEEKS,
+                                       this_week_start_date,
+                                       this_week_end_date                  --, week_number
+                                                         ,
+                                       fin_year_no,
+                                       fin_week_no,
+                                       rnk ,
+                                       (RNK / NO_OF_WEEKS) RANK_week_number
+                           FROM (SELECT
+                                               EMPLOYEE_ID,
+                                               ORIG_CYCLE_START_DATE,
+                                               CYCLE_START_DATE,
+                                               CYCLE_end_date,
+                                               AVAILABILITY_START_DATE,
+                                               AVAILABILITY_end_DATE,
+                                               NO_OF_WEEKS,
+                                               this_week_start_date,
+                                               this_week_end_date,
+                                               fin_year_no,
+                                               fin_week_no,
+                                               --week_number,
+                                               DENSE_RANK ()
+                                               OVER (
+                                                  PARTITION BY EMPLOYEE_ID,
+                                                         CYCLE_START_DATE, AVAILABILITY_START_DATE
+                                                  ORDER BY this_week_start_date)
+                                                  rnk
+                                          FROM SELEXT1) srk
+                              ORDER BY EMPLOYEE_ID,
+                                       CYCLE_START_DATE,
+                                       (RNK / NO_OF_WEEKS)
+                                       ),
+              SELVAL
+                              AS (  SELECT
+                                           EMPLOYEE_ID,
+                                           ORIG_CYCLE_START_DATE,
+                                           AVAILABILITY_START_DATE,
+                                           AVAILABILITY_end_DATE,
+                                           CYCLE_START_DATE,
+                                           CYCLE_end_date,
+                                           NO_OF_WEEKS,
+                                           this_week_start_date,
+                                           this_week_end_date                  --, week_number
+                                                             ,
+                                           fin_year_no,
+                                           fin_week_no,
+                                           SRK.RNK
+                                      FROM (SELECT
+                                                   EMPLOYEE_ID,
+                                                   CYCLE_START_DATE,
+                                                   CYCLE_end_date,
+                                                        ORIG_CYCLE_START_DATE,
+                                           AVAILABILITY_START_DATE,
+                                           AVAILABILITY_end_DATE,
+                                                   NO_OF_WEEKS,
+                                                   this_week_start_date,
+                                                   this_week_end_date,
+                                                   fin_year_no,
+                                                   fin_week_no,
+                                                   RANK_WEEK_NUMBER,
+                                                   --week_number,
+                                                   DENSE_RANK ()
+                                                   OVER (
+                                                      PARTITION BY EMPLOYEE_ID,
+                                                                   CYCLE_START_DATE,
+                                                                        ORIG_CYCLE_START_DATE,
+                                           AVAILABILITY_START_DATE,
+                                                                   NO_OF_WEEKS
+                                                      ORDER BY RANK_WEEK_NUMBER)
+                                                      rnk
+                                              FROM SELEXT2) srk
+                                  ORDER BY EMPLOYEE_ID,
+                                           CYCLE_START_DATE,
+                                           this_week_start_date)
+         SELECT distinct
+                            EMPLOYEE_ID,
+                            CYCLE_START_DATE,
+                            CYCLE_end_date,
+                            NO_OF_WEEKS,
+                            this_week_start_date,
+                            this_week_end_date                             --, week_number
+                                              ,
+                            fin_year_no,
+                            fin_week_no,
+                            RNK emp_loc_rank,
+                            CYCLE_START_DATE + 20 CYCLE_start_date_plus_20,
+                            this_week_start_date + 20 this_week_start_date_plus_20,
+                            0,
+                                                             ORIG_CYCLE_START_DATE,
+                                           AVAILABILITY_START_DATE, AVAILABILITY_end_DATE
+                       FROM SELVAL
+     ;
+     g_recs_inserted :=0;
+     g_recs_inserted :=SQL%ROWCOUNT;
+
+    commit;
+    l_text := 'Recs inserted into   dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2 = '||g_recs_inserted;
+    dwh_log.write_log (l_name, l_system_name, l_script_name,l_procedure_name, l_text);
+---------------------------------------------------------------
+--
+-- STEP 5 : update table TEMP_S4S_LOC_EMP_DY_part2 with week_number
+--
+-- NOTES
+--------
+-- This step creates the list of employees with the following info :
+-- a.) week_number = week_number within the cycle period
+---------------------------------------------------------------
+      g_sub := 100;
+
+      g_recs_inserted := 0;
+      g_recs_updated := 0;
+      g_recs := 0;
+
+      FOR v_cur IN (  SELECT /*+ FULL(a)  PARALLEL(a,6)   */ employee_id,
+                             CYCLE_start_date,
+                             AVAILABILITY_START_DATE,
+                             this_week_start_date,
+                             this_week_start_date_plus_20,
+                             no_of_weeks
+                        FROM dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2 A
+                    ORDER BY employee_id,
+                             CYCLE_start_date,
+                              AVAILABILITY_START_DATE,
+                             this_week_start_date,
+                             this_week_start_date_plus_20)
+      LOOP
+         g_sub := g_sub + 1;
+
+         IF    g_sub > v_cur.no_of_weeks
+            OR v_cur.CYCLE_start_date = v_cur.this_week_start_date
+         THEN
+            g_sub := 1;
+         END IF;
+
+         UPDATE dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2 p2
+            SET p2.week_number = g_sub
+          WHERE     p2.employee_id = v_cur.employee_id
+                and p2.cycle_start_date = v_cur.cycle_start_date
+                and p2.availability_start_date = v_cur.availability_start_date
+                AND p2.this_week_start_date = v_cur.this_week_start_date;
+          g_recs :=SQL%ROWCOUNT ;
+         COMMIT;
+         g_recs_updated := g_recs_updated + g_recs;
+         
+          if g_recs_updated mod 50000 = 0 
+          then 
+         l_text := 'Recs updated in   dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2 = '||g_recs_updated;
+         dwh_log.write_log (l_name, l_system_name, l_script_name,l_procedure_name, l_text);
+       end if;
+         
+
+      END LOOP;
+
+---------------------------------------------------------------
+--
+-- STEP 6 : insert into table TEMP_S4S_LOC_EMP_DY_part3 
+--
+-- NOTES
+--------
+-- This step creates the list of employees with the following info :
+-- a.) week_number = week_number within the cycle period
+---------------------------------------------------------------
+      EXECUTE IMMEDIATE
+         ('TRUNCATE TABLE  dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part3');
+         
+INSERT /*+ APPEND */
+INTO dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part3
+WITH selext1 AS
+  (SELECT DISTINCT EMPLOYEE_ID,
+    ORIG_CYCLE_START_DATE,
+    AVAILABILITY_START_DATE,
+    AVAILABILITY_END_DATE ,
+    CYCLE_START_DATE,
+    CYCLE_END_DATE
+  FROM dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2
+  WHERE this_week_start_date BETWEEN orig_cycle_start_date AND NVL(availability_end_date, g_end_date)
+  ),
+  selext2 AS
+  (SELECT tmp.EMPLOYEE_ID ,
+    tmp.ORIG_CYCLE_START_DATE ,
+    tmp.AVAILABILITY_START_DATE ,
+    tmp.AVAILABILITY_END_DATE ,
+    tmp.CYCLE_START_DATE ,
+    tmp.CYCLE_END_DATE ,
+    tmp.NO_OF_WEEKS ,
+    tmp.THIS_WEEK_START_DATE ,
+    tmp.THIS_WEEK_END_DATE ,
+    tmp.FIN_YEAR_NO ,
+    tmp.FIN_WEEK_NO ,
+    tmp.EMP_LOC_RANK ,
+    tmp.AVAIL_CYCLE_START_DATE_PLUS_20 ,
+    tmp.THIS_WEEK_START_DATE_PLUS_20 ,
+    tmp.WEEK_NUMBER
+  FROM dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part2 tmp,
+    selext1 se1
+  WHERE (tmp.this_week_start_date BETWEEN tmp.orig_cycle_start_date AND NVL(tmp.availability_end_date, g_end_date)
+  OR tmp.this_week_start_date BETWEEN se1.cycle_start_date AND se1.cycle_end_date)
+  AND tmp.employee_id             = se1.employee_id
+  AND tmp.orig_cycle_start_date   = se1.orig_cycle_start_date
+  AND tmp.availability_start_date = se1.availability_start_date
+  AND tmp.cycle_start_date        = se1.cycle_start_date
+  )
+SELECT tmp.EMPLOYEE_ID ,
+  tmp.ORIG_CYCLE_START_DATE ,
+  tmp.AVAILABILITY_START_DATE ,
+  tmp.AVAILABILITY_END_DATE ,
+  tmp.CYCLE_START_DATE ,
+  tmp.CYCLE_END_DATE ,
+  tmp.NO_OF_WEEKS ,
+  tmp.THIS_WEEK_START_DATE ,
+  tmp.THIS_WEEK_END_DATE ,
+  tmp.FIN_YEAR_NO ,
+  tmp.FIN_WEEK_NO ,
+  tmp.EMP_LOC_RANK ,
+  tmp.AVAIL_CYCLE_START_DATE_PLUS_20 ,
+  tmp.THIS_WEEK_START_DATE_PLUS_20 ,
+  tmp.WEEK_NUMBER
+FROM selext2 tmp
+WHERE this_week_start_date BETWEEN tmp.availability_start_date AND NVL(tmp.availability_end_date, g_end_date)
+ORDER BY orig_cycle_start_date,
+  availability_start_date,
+  this_week_start_date;
+g_recs :=SQL%ROWCOUNT ;
+COMMIT;
+g_recs_inserted := g_recs;
+l_text          := 'Recs inserted in   dwh_PERFORMANCE.TEMP_S4S_LOC_EMP_DY_part3 = '||g_recs_inserted;
+dwh_log.write_log (l_name, l_system_name, l_script_name,l_procedure_name, l_text);
+
+
+
+
+--**************************************************************************************************
+-- Write final log data
+--**************************************************************************************************
+      dwh_log.update_log_summary (l_name, l_system_name, l_script_name, l_procedure_name, l_description, l_process_type,
+      dwh_constants.vc_log_ended, g_recs_read, g_recs_inserted, g_recs_updated, '','');
+      l_text := dwh_constants.vc_log_time_completed || TO_CHAR (SYSDATE, ('dd mon yyyy hh24:mi:ss'));
+      dwh_log.write_log (l_name, l_system_name, l_script_name, l_procedure_name, l_text);
+      l_text := dwh_constants.vc_log_records_read || g_recs_read;
+      dwh_log.write_log (l_name, l_system_name, l_script_name, l_procedure_name, l_text);
+      l_text := dwh_constants.vc_log_records_inserted || g_recs_inserted;
+      dwh_log.write_log (l_name, l_system_name, l_script_name, l_procedure_name, l_text);
+      l_text := dwh_constants.vc_log_records_updated || g_recs_updated;
+      dwh_log.write_log (l_name, l_system_name, l_script_name, l_procedure_name, l_text);
+      l_text := dwh_constants.vc_log_run_completed || SYSDATE;
+      dwh_log.write_log (l_name, l_system_name, l_script_name, l_procedure_name, l_text);
+      l_text := dwh_constants.vc_log_draw_line;
+      dwh_log.write_log (l_name, l_system_name, l_script_name, l_procedure_name, l_text);
+      l_text := ' ';
+      dwh_log.write_log (l_name, l_system_name, l_script_name, l_procedure_name, l_text);
+   COMMIT;
+   p_success := TRUE;
+EXCEPTION
+   WHEN dwh_errors.e_insert_error
+   THEN
+      l_message := dwh_constants.vc_err_mm_insert || SQLCODE || ' ' || SQLERRM;
+      dwh_log.record_error (l_module_name, SQLCODE, l_message);
+      dwh_log.update_log_summary (l_name, l_system_name, l_script_name, l_procedure_name, l_description, l_process_type, dwh_constants.vc_log_aborted, '', '', '', '', '');
+      ROLLBACK;
+      p_success := FALSE;
+      RAISE;
+WHEN OTHERS THEN
+      l_message := dwh_constants.vc_err_mm_other || SQLCODE || ' ' || SQLERRM;
+      dwh_log.record_error (l_module_name, SQLCODE, l_message);
+      dwh_log.update_log_summary (l_name, l_system_name, l_script_name, l_procedure_name, l_description, l_process_type, dwh_constants.vc_log_aborted, '', '', '', '', '');
+      ROLLBACK;
+      p_success := FALSE;
+      RAISE;
+
+
+
+END WH_PRF_S4S_004A_TAKEON;
