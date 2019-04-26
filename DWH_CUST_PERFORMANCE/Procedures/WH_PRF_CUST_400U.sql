@@ -991,3 +991,5 @@ from
        raise;
 
 end WH_PRF_CUST_400U;
+/
+show errors
