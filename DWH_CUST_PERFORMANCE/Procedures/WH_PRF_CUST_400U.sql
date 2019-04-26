@@ -35,7 +35,9 @@ set define off;
 --               from dim_customer_mapping - Order by SOURCE_KEY and LAST_UPDATED_DATE desc  
 --               Miles Mafu  08/Oct/2018
 --               Ref: 20190219 MDM
--- 
+--              
+--               Paul Wakefield 2019-04-26
+--               Added extra logging statements to identify slow queries
 --
 --  Naming conventions:
 --  g_  -  Global variable
@@ -466,6 +468,9 @@ from
 -- * Apologies for the convoluted SQL. It's due to string limitations and the various permutations
 --   The survey could present.
 --**************************************************************************************************
+
+    dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,'Looping over survey');
+
     for c_survey in (select * from temp_survey_master order by priority_order)
     loop
         execute immediate 'truncate table temp_basket_item';
@@ -551,6 +556,7 @@ from
 --           dbms_output.put_line(g_stmt)   ; 
         end if;
        insert into dwh_cust_performance.temp_survey_sql values (g_sql_log_date,c_survey.survey_code,cast('1' as number),g_stmt);commit;
+        dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,'Inserting temp_basket_item');
         execute immediate g_stmt;
         g_recs_updated := sql%rowcount;
 
@@ -639,6 +645,7 @@ from
             insert into dwh_cust_performance.temp_survey_sql values (g_sql_log_date,c_survey.survey_code,cast('2' as number),g_stmt);
             commit;
 
+           dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,'Inserting temp_csats_survey_detail');
             execute immediate g_stmt;
             g_recs_read := g_recs_read + sql%rowcount;
             g_recs_in_temp := sql%rowcount;
@@ -648,7 +655,8 @@ from
 --************************************************************************************************** 
 -- Had to be don like this as the above script with the merge exceded 400 Characters.
 --**************************************************************************************************
-             g_recs_loaded := 0;
+           dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,'Inserting cust_csats_survey_detail');
+           g_recs_loaded := 0;
              for c_insert in (
                    with unique_rows as (
                    select /*+ Parallel(8) */ 
