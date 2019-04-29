@@ -1,9 +1,12 @@
---------------------------------------------------------
---  DDL for Procedure WH_PRF_CUST_347U
---------------------------------------------------------
-set define off;
+create or replace PROCEDURE                                                                                                                                                                                      WH_PRF_CUST_347U (p_forall_limit in integer,p_success out boolean) AS
 
-  CREATE OR REPLACE PROCEDURE "DWH_CUST_PERFORMANCE"."WH_PRF_CUST_347U" (p_forall_limit in integer,p_success out boolean) AS
+-- *************************************************************************************************
+-- * Notes from 12.2 upgrade performance tuning
+-- *************************************************************************************************
+-- Date:   2019-04-10
+-- Author: Paul Wakefield
+-- Reworked tuning
+-- **************************************************************************************************
 
 --**************************************************************************************************
 --  Date:        Sept 2017
@@ -61,7 +64,7 @@ l_process_type       sys_dwh_log_summary.log_process_type%type := dwh_cust_const
 
 
 cursor c_prf_cust_basket is
-   select /*+ parallel (cb,6) */ 
+   select /*+ full(cb) parallel (cb,6) */ 
    location_no,
    till_no,
    tran_no,
@@ -114,7 +117,7 @@ for bk_rec in c_prf_cust_basket
        g_tran_no          := bk_rec.tran_no;
        g_tran_date        := bk_rec.tran_date;
        
-     select /*+ parallel (cbi,4) */ max(ppc_operator) 
+     select max(ppc_operator) 
      into   g_ppc_operator
      from   cust_basket_aux cb
      where  tran_date   =  g_tran_date
@@ -124,11 +127,11 @@ for bk_rec in c_prf_cust_basket
      and    tran_type_code = 'PPC AUTH';
              
            
-             merge /*+ parallel(6) */ into cust_mart_staff_disc_detail cms
+     merge /*+ APPEND no_gather_optimizer_statistics */
+           into cust_mart_staff_disc_detail cms
              using (
              with itm as (
-               select /*+ parallel (cbi,6) */
-                      cbi.item_no,
+               select cbi.item_no,
                       sum(item_tran_qty) itq,
                       sum(item_tran_selling) its
                from   cust_basket_item cbi
@@ -138,8 +141,7 @@ for bk_rec in c_prf_cust_basket
                and    tran_date   = g_tran_date
                group by cbi.item_no),
                    aux as (
-             select /*+ parallel (cba,6)  */ 
-                    cba.item_no,
+             select cba.item_no,
                     sum (case when tran_type_code  = 'STAFF' then promotion_discount_amount else 0 end) comp_disc_sell ,
                     sum (case when tran_type_code <> 'STAFF' then promotion_discount_amount else 0 end) prom_disc_sell 
              from   cust_basket_aux cba
