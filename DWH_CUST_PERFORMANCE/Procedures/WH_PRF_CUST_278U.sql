@@ -6,6 +6,13 @@ set define off;
   CREATE OR REPLACE PROCEDURE "DWH_CUST_PERFORMANCE"."WH_PRF_CUST_278U" 
 
                                                                                                                                                                                                                                                                                                                            (p_forall_limit in integer,p_success out boolean) AS 
+-- *************************************************************************************************
+-- * Notes from 12.2 upgrade performance tuning
+-- *************************************************************************************************
+-- Date:   2019-05-02 
+-- Author: Paul Wakefield
+-- Rewrote query to bypass temporary tables.
+-- **************************************************************************************************
 
 --**************************************************************************************************
 --  Date:        Oct 2015
@@ -132,24 +139,6 @@ begin
    
     g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.CUST_DB_COMPANY_MONTH';
     execute immediate g_stmt;  
-    g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.TEMP_DB_COMPANY_MONTH_1';
-    execute immediate g_stmt; 
-    g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.TEMP_DB_COMPANY_MONTH_2';
-    execute immediate g_stmt; 
-    g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.TEMP_DB_COMPANY_MONTH_3';
-    execute immediate g_stmt; 
-    g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.TEMP_DB_COMPANY_MONTH_4';
-    execute immediate g_stmt;     
-
-   l_text := 'UPDATE STATS ON ALL TABLES'; 
-   dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
- 
-   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','TEMP_DB_COMPANY_MONTH_1',estimate_percent=>1, DEGREE => 32);
-   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','TEMP_DB_COMPANY_MONTH_2',estimate_percent=>1, DEGREE => 32);
-   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','TEMP_DB_COMPANY_MONTH_3',estimate_percent=>1, DEGREE => 32);
-   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','TEMP_DB_COMPANY_MONTH_4',estimate_percent=>1, DEGREE => 32);
---   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','CUST_DB_COMPANY_MONTH',estimate_percent=>1, DEGREE => 32);
-   COMMIT;
 
 -- SET UP DATE RANGES THAT HAVE TO BE PROCESSED -- 
    g_mn_loop := g_mn_00;
@@ -178,1429 +167,165 @@ begin
 
 --MAIN INSERT STATEMENT USING UNION ALL ACCROSS ALL DATE RANGES --
 
-   l_text := 'MAIN INSERT START INTO 4 TEMP TABLES'; 
-   dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
+-- cust_db_company_month
+-- company_no
 
-
-   insert /*+ APPEND parallel (prf,8) */ into temp_db_company_month_1 prf
-   with     bskt1 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no,
-            max(customer_no)   customer_no,
-            sum(item_tran_qty) item_01,
-            sum(item_tran_selling - discount_selling) sales_01,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_01,
-            0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03, 0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07, 0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(1) and date_to(1) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt2 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,
-            sum(item_tran_qty) item_02,
-            sum(item_tran_selling - discount_selling) sales_02,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_02,
-            0 item_03,0 sales_03,0 visit_03, 0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07, 0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(2) and date_to(2) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt3 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02, 
-            sum(item_tran_qty) item_03,
-            sum(item_tran_selling - discount_selling) sales_03,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_03,
-            0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07, 0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(3) and date_to(3) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt4 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,
-            sum(item_tran_qty) item_04,
-            sum(item_tran_selling - discount_selling) sales_04,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_04,
-            0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07, 0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(4) and date_to(4) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt5 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,
-            sum(item_tran_qty) item_05,
-            sum(item_tran_selling - discount_selling) sales_05,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07, 0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(5) and date_to(5) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt6 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            sum(item_tran_qty) item_06,
-            sum(item_tran_selling - discount_selling) sales_06,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_06,
-            0 item_07,0 sales_07,0 visit_07, 0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(6) and date_to(6) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt7 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06, 
-            sum(item_tran_qty) item_07,
-            sum(item_tran_selling - discount_selling) sales_07,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_07,
-            0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(7) and date_to(7) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt8 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07, 
-            sum(item_tran_qty) item_08,
-            sum(item_tran_selling - discount_selling) sales_08,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_08,
-            0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(8) and date_to(8) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt9 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08, 
-            sum(item_tran_qty) item_09,
-            sum(item_tran_selling - discount_selling) sales_09,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_09,
-            0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(9) and date_to(9) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            cust_union_all as
-   (
-   select  /*+ FULL(b01)  parallel (b01,4)  */  *   from bskt1   b01
-   union all
-   select  /*+ FULL(b02)  parallel (b02,4)  */  *   from bskt2   b02
-   union all
-   select  /*+ FULL(b03)  parallel (b03,4)  */  *   from bskt3   b03
-   union all
-   select  /*+ FULL(b04)  parallel (b04,4)  */  *   from bskt4   b04
-   union all
-   select  /*+ FULL(b05)  parallel (b05,4)  */  *   from bskt5   b05
-   union all
-   select  /*+ FULL(b06)  parallel (b06,4)  */  *   from bskt6   b06
-   union all
-   select  /*+ FULL(b07)  parallel (b07,4)  */  *   from bskt7   b07
-   union all
-   select  /*+ FULL(b08)  parallel (b08,4)  */  *   from bskt8   b08
-   union all
-   select  /*+ FULL(b09)  parallel (b09,4)  */  *   from bskt9   b09
-   )         
-   select /*+ FULL(cua)  parallel (cua,8)  */
-            g_yr_00,g_mn_00,
-            primary_customer_identifier,
-            company_no,
-            max(customer_no) customer_no,
-            sum(item_01),sum(sales_01),sum(visit_01),
-            sum(item_02),sum(sales_02),sum(visit_02),
-            sum(item_03),sum(sales_03),sum(visit_03),
-            sum(item_04),sum(sales_04),sum(visit_04),
-            sum(item_05),sum(sales_05),sum(visit_05),
-            sum(item_06),sum(sales_06),sum(visit_06),
-            sum(item_07),sum(sales_07),sum(visit_07),
-            sum(item_08),sum(sales_08),sum(visit_08),
-            sum(item_09),sum(sales_09),sum(visit_09),
-            sum(item_10),sum(sales_10),sum(visit_10),
-            sum(item_11),sum(sales_11),sum(visit_11),
-            sum(item_12),sum(sales_12),sum(visit_12),
-            sum(item_13),sum(sales_13),sum(visit_13),
-            sum(item_14),sum(sales_14),sum(visit_14),
-            sum(item_15),sum(sales_15),sum(visit_15),
-            sum(item_16),sum(sales_16),sum(visit_16),
-            sum(item_17),sum(sales_17),sum(visit_17),
-            sum(item_18),sum(sales_18),sum(visit_18),
-            sum(item_19),sum(sales_19),sum(visit_19),
-            sum(item_20),sum(sales_20),sum(visit_20),
-            sum(item_21),sum(sales_21),sum(visit_21),
-            sum(item_22),sum(sales_22),sum(visit_22),
-            sum(item_23),sum(sales_23),sum(visit_23),
-            sum(item_24),sum(sales_24),sum(visit_24),
-            sum(item_25),sum(sales_25),sum(visit_25),
-            sum(item_26),sum(sales_26),sum(visit_26),
-            sum(item_27),sum(sales_27),sum(visit_27),
-            sum(item_28),sum(sales_28),sum(visit_28),
-            sum(item_29),sum(sales_29),sum(visit_29),
-            sum(item_30),sum(sales_30),sum(visit_30),
-            sum(item_31),sum(sales_31),sum(visit_31),
-            sum(item_32),sum(sales_32),sum(visit_32),
-            sum(item_33),sum(sales_33),sum(visit_33),
-            sum(item_34),sum(sales_34),sum(visit_34),
-            sum(item_35),sum(sales_35),sum(visit_35),
-            sum(item_36),sum(sales_36),sum(visit_36),
-            g_date
-   from     cust_union_all cua
-   group by primary_customer_identifier,company_no
-   ;
-
-   commit;
-   l_text := 'FIRST TEMP TABLE WRITTEN FOR 9 MONTHS DATA'; 
-   dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
-
-   insert /*+ APPEND parallel (prf,12) */ into temp_db_company_month_2 prf
-   with         bskt10 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,
-            sum(item_tran_qty) item_10,
-            sum(item_tran_selling - discount_selling) sales_10,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12, 0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17, 0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22, 0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27, 0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32, 0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(10) and date_to(10) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt11 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            sum(item_tran_qty) item_11,
-            sum(item_tran_selling - discount_selling) sales_11,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_11,
-            0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(11) and date_to(11) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt12 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11, 
-            sum(item_tran_qty) item_12,
-            sum(item_tran_selling - discount_selling) sales_12,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_12,
-            0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(12) and date_to(12) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt13 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,
-            sum(item_tran_qty) item_13,
-            sum(item_tran_selling - discount_selling) sales_13,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_13,
-            0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(13) and date_to(13) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt14 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,
-            sum(item_tran_qty) item_14,
-            sum(item_tran_selling - discount_selling) sales_14,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_14,
-            0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(14) and date_to(14) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt15 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,
-            sum(item_tran_qty) item_15,
-            sum(item_tran_selling - discount_selling) sales_15,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(15) and date_to(15) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt16 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            sum(item_tran_qty) item_16,
-            sum(item_tran_selling - discount_selling) sales_16,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_16,
-            0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(16) and date_to(16) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt17 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16, 
-            sum(item_tran_qty) item_17,
-            sum(item_tran_selling - discount_selling) sales_17,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_17,
-            0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(17) and date_to(17) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt18 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,
-            sum(item_tran_qty) item_18,
-            sum(item_tran_selling - discount_selling) sales_18,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_18,
-            0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(18) and date_to(18) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            cust_union_all as
-   (
-   select  /*+ FULL(b10)  parallel (b10,4)  */  *   from bskt10  b10
-   union all
-   select  /*+ FULL(b11)  parallel (b11,4)  */  *   from bskt11  b11
-   union all
-   select  /*+ FULL(b12)  parallel (b12,4)  */  *   from bskt12  b12
-   union all
-   select  /*+ FULL(b13)  parallel (b13,4)  */  *   from bskt13  b13
-   union all
-   select  /*+ FULL(b14)  parallel (b14,4)  */  *   from bskt14  b14
-   union all
-   select  /*+ FULL(b15)  parallel (b15,4)  */  *   from bskt15  b15
-   union all
-   select  /*+ FULL(b16)  parallel (b16,4)  */  *   from bskt16  b16
-   union all
-   select  /*+ FULL(b17)  parallel (b17,4)  */  *   from bskt17  b17
-   union all
-   select  /*+ FULL(b18)  parallel (b18,4)  */  *   from bskt18  b18
-
-   )         
-   select /*+ FULL(cua)  parallel (cua,8)  */
-            g_yr_00,g_mn_00,
-            primary_customer_identifier,
-            company_no,
-            max(customer_no) customer_no,
-            sum(item_01),sum(sales_01),sum(visit_01),
-            sum(item_02),sum(sales_02),sum(visit_02),
-            sum(item_03),sum(sales_03),sum(visit_03),
-            sum(item_04),sum(sales_04),sum(visit_04),
-            sum(item_05),sum(sales_05),sum(visit_05),
-            sum(item_06),sum(sales_06),sum(visit_06),
-            sum(item_07),sum(sales_07),sum(visit_07),
-            sum(item_08),sum(sales_08),sum(visit_08),
-            sum(item_09),sum(sales_09),sum(visit_09),
-            sum(item_10),sum(sales_10),sum(visit_10),
-            sum(item_11),sum(sales_11),sum(visit_11),
-            sum(item_12),sum(sales_12),sum(visit_12),
-            sum(item_13),sum(sales_13),sum(visit_13),
-            sum(item_14),sum(sales_14),sum(visit_14),
-            sum(item_15),sum(sales_15),sum(visit_15),
-            sum(item_16),sum(sales_16),sum(visit_16),
-            sum(item_17),sum(sales_17),sum(visit_17),
-            sum(item_18),sum(sales_18),sum(visit_18),
-            sum(item_19),sum(sales_19),sum(visit_19),
-            sum(item_20),sum(sales_20),sum(visit_20),
-            sum(item_21),sum(sales_21),sum(visit_21),
-            sum(item_22),sum(sales_22),sum(visit_22),
-            sum(item_23),sum(sales_23),sum(visit_23),
-            sum(item_24),sum(sales_24),sum(visit_24),
-            sum(item_25),sum(sales_25),sum(visit_25),
-            sum(item_26),sum(sales_26),sum(visit_26),
-            sum(item_27),sum(sales_27),sum(visit_27),
-            sum(item_28),sum(sales_28),sum(visit_28),
-            sum(item_29),sum(sales_29),sum(visit_29),
-            sum(item_30),sum(sales_30),sum(visit_30),
-            sum(item_31),sum(sales_31),sum(visit_31),
-            sum(item_32),sum(sales_32),sum(visit_32),
-            sum(item_33),sum(sales_33),sum(visit_33),
-            sum(item_34),sum(sales_34),sum(visit_34),
-            sum(item_35),sum(sales_35),sum(visit_35),
-            sum(item_36),sum(sales_36),sum(visit_36),
-            g_date
-   from     cust_union_all cua
-   group by primary_customer_identifier,company_no
-   ;   
-   commit;
-   l_text := 'SECOND TEMP TABLE WRITTEN FOR 9 MONTHS DATA'; 
-   dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);  
-   
-   insert /*+ APPEND parallel (prf,12) */ into temp_db_company_month_3 prf   
-   with         bskt19 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,
-            sum(item_tran_qty) item_19,
-            sum(item_tran_selling - discount_selling) sales_19,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_19,
-            0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(19) and date_to(19) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt20 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,
-            sum(item_tran_qty) item_20,
-            sum(item_tran_selling - discount_selling) sales_20,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(20) and date_to(20) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt21 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            sum(item_tran_qty) item_21,
-            sum(item_tran_selling - discount_selling) sales_21,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_21,
-            0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(21) and date_to(21) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt22 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,
-            sum(item_tran_qty) item_22,
-            sum(item_tran_selling - discount_selling) sales_22,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_22,
-            0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(22) and date_to(22) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt23 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,
-            sum(item_tran_qty) item_23,
-            sum(item_tran_selling - discount_selling) sales_23,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_23,
-            0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(23) and date_to(23) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),  
-            bskt24 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,
-            sum(item_tran_qty) item_24,
-            sum(item_tran_selling - discount_selling) sales_24,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_24,
-            0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(24) and date_to(24) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ), 
-            bskt25 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,
-            sum(item_tran_qty) item_25,
-            sum(item_tran_selling - discount_selling) sales_25,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(25) and date_to(25) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ), 
-            bskt26 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            sum(item_tran_qty) item_26,
-            sum(item_tran_selling - discount_selling) sales_26,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_26,
-            0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(26) and date_to(26) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt27 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,
-            sum(item_tran_qty) item_27,
-            sum(item_tran_selling - discount_selling) sales_27,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_27,
-            0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(27) and date_to(27) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),  
-             cust_union_all as
-   (
-   select  /*+ FULL(b19)  parallel (b19,4)  */  *   from bskt19  b19
-   union all
-   select  /*+ FULL(b20)  parallel (b20,4)  */  *   from bskt20  b20
-   union all
-   select  /*+ FULL(b21)  parallel (b21,4)  */  *   from bskt21  b21
-   union all
-   select  /*+ FULL(b22)  parallel (b22,4)  */  *   from bskt22  b22
-   union all
-   select  /*+ FULL(b23)  parallel (b23,4)  */  *   from bskt23  b23
-   union all
-   select  /*+ FULL(b24)  parallel (b24,4)  */  *   from bskt24  b24
-   union all
-   select  /*+ FULL(b25)  parallel (b25,4)  */  *   from bskt25  b25
-   union all
-   select  /*+ FULL(b26)  parallel (b26,4)  */  *   from bskt26  b26
-    union all
-   select  /*+ FULL(b27)  parallel (b27,4)  */  *   from bskt27  b27
-   )         
-   select /*+ FULL(cua)  parallel (cua,8)  */
-            g_yr_00,g_mn_00,
-            primary_customer_identifier,
-            company_no,
-            max(customer_no) customer_no,
-            sum(item_01),sum(sales_01),sum(visit_01),
-            sum(item_02),sum(sales_02),sum(visit_02),
-            sum(item_03),sum(sales_03),sum(visit_03),
-            sum(item_04),sum(sales_04),sum(visit_04),
-            sum(item_05),sum(sales_05),sum(visit_05),
-            sum(item_06),sum(sales_06),sum(visit_06),
-            sum(item_07),sum(sales_07),sum(visit_07),
-            sum(item_08),sum(sales_08),sum(visit_08),
-            sum(item_09),sum(sales_09),sum(visit_09),
-            sum(item_10),sum(sales_10),sum(visit_10),
-            sum(item_11),sum(sales_11),sum(visit_11),
-            sum(item_12),sum(sales_12),sum(visit_12),
-            sum(item_13),sum(sales_13),sum(visit_13),
-            sum(item_14),sum(sales_14),sum(visit_14),
-            sum(item_15),sum(sales_15),sum(visit_15),
-            sum(item_16),sum(sales_16),sum(visit_16),
-            sum(item_17),sum(sales_17),sum(visit_17),
-            sum(item_18),sum(sales_18),sum(visit_18),
-            sum(item_19),sum(sales_19),sum(visit_19),
-            sum(item_20),sum(sales_20),sum(visit_20),
-            sum(item_21),sum(sales_21),sum(visit_21),
-            sum(item_22),sum(sales_22),sum(visit_22),
-            sum(item_23),sum(sales_23),sum(visit_23),
-            sum(item_24),sum(sales_24),sum(visit_24),
-            sum(item_25),sum(sales_25),sum(visit_25),
-            sum(item_26),sum(sales_26),sum(visit_26),
-            sum(item_27),sum(sales_27),sum(visit_27),
-            sum(item_28),sum(sales_28),sum(visit_28),
-            sum(item_29),sum(sales_29),sum(visit_29),
-            sum(item_30),sum(sales_30),sum(visit_30),
-            sum(item_31),sum(sales_31),sum(visit_31),
-            sum(item_32),sum(sales_32),sum(visit_32),
-            sum(item_33),sum(sales_33),sum(visit_33),
-            sum(item_34),sum(sales_34),sum(visit_34),
-            sum(item_35),sum(sales_35),sum(visit_35),
-            sum(item_36),sum(sales_36),sum(visit_36),
-            g_date
-   from     cust_union_all cua
-   group by primary_customer_identifier,company_no
-   ;  
-   
-   commit;
-   l_text := 'THIRD TEMP TABLE WRITTEN FOR 9 MONTHS DATA'; 
-   dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text); 
-   
-   insert /*+ APPEND parallel (prf,12) */ into temp_db_company_month_4 prf     
-   with         bskt28 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,
-            sum(item_tran_qty) item_28,
-            sum(item_tran_selling - discount_selling) sales_28,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_28,
-            0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(28) and date_to(28) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt29 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,
-            sum(item_tran_qty) item_29,
-            sum(item_tran_selling - discount_selling) sales_29,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_29,
-            0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(29) and date_to(29) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt30 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,
-            sum(item_tran_qty) item_30,
-            sum(item_tran_selling - discount_selling) sales_30,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(30) and date_to(30) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt31 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            sum(item_tran_qty) item_31,
-            sum(item_tran_selling - discount_selling) sales_31,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_31,
-            0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(31) and date_to(31) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt32 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,
-            sum(item_tran_qty) item_32,
-            sum(item_tran_selling - discount_selling) sales_32,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_32,
-            0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(32) and date_to(32) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),
-            bskt33 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,
-            sum(item_tran_qty) item_33,
-            sum(item_tran_selling - discount_selling) sales_33,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_33,
-            0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(33) and date_to(33) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),   
-            bskt34 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,
-            sum(item_tran_qty) item_34,
-            sum(item_tran_selling - discount_selling) sales_34,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_34,
-            0 item_35,0 sales_35,0 visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(34) and date_to(34) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),  
-            bskt35 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,
-            sum(item_tran_qty) item_35,
-            sum(item_tran_selling - discount_selling) sales_35,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_35,
-            0 item_36,0 sales_36,0 visit_36
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(35) and date_to(35) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),   
-            bskt36 as 
-   (
-   select  /*+ FULL(cbi) parallel (cbi,16)  full(di) */ 
-            primary_customer_identifier,
-            di.company_no   company_no,
-            max(customer_no)   customer_no,
-            0 item_01,0 sales_01,0 visit_01,0 item_02,0 sales_02,0 visit_02,0 item_03,0 sales_03,0 visit_03,0 item_04,0 sales_04,0 visit_04,0 item_05,0 sales_05,0 visit_05,
-            0 item_06,0 sales_06,0 visit_06,0 item_07,0 sales_07,0 visit_07,0 item_08,0 sales_08,0 visit_08,0 item_09,0 sales_09,0 visit_09,0 item_10,0 sales_10,0 visit_10,
-            0 item_11,0 sales_11,0 visit_11,0 item_12,0 sales_12,0 visit_12,0 item_13,0 sales_13,0 visit_13,0 item_14,0 sales_14,0 visit_14,0 item_15,0 sales_15,0 visit_15,
-            0 item_16,0 sales_16,0 visit_16,0 item_17,0 sales_17,0 visit_17,0 item_18,0 sales_18,0 visit_18,0 item_19,0 sales_19,0 visit_19,0 item_20,0 sales_20,0 visit_20,
-            0 item_21,0 sales_21,0 visit_21,0 item_22,0 sales_22,0 visit_22,0 item_23,0 sales_23,0 visit_23,0 item_24,0 sales_24,0 visit_24,0 item_25,0 sales_25,0 visit_25,
-            0 item_26,0 sales_26,0 visit_26,0 item_27,0 sales_27,0 visit_27,0 item_28,0 sales_28,0 visit_28,0 item_29,0 sales_29,0 visit_29,0 item_30,0 sales_30,0 visit_30,
-            0 item_31,0 sales_31,0 visit_31,0 item_32,0 sales_32,0 visit_32,0 item_33,0 sales_33,0 visit_33,0 item_34,0 sales_34,0 visit_34,0 item_35,0 sales_35,0 visit_35,
-            sum(item_tran_qty) item_36,
-            sum(item_tran_selling - discount_selling) sales_36,  
-            count(unique tran_no||tran_date||till_no||location_no) visit_36 
-   from     cust_basket_item cbi,
-            dim_item di
-   where    tran_date between date_from(36) and date_to(36) and  
-            cbi.item_no  = di.item_no and
-            tran_type in ('S','V','R') and
-            primary_customer_identifier is not null and
-            primary_customer_identifier <> 0  and
-            primary_customer_identifier not between 6007851400000000 and 6007851499999999    
-   group by primary_customer_identifier,di.company_no
-   ),   
-   
-            cust_union_all as
-   (
-   select  /*+ FULL(b28)  parallel (b28,4)  */  *   from bskt28  b28
-   union all
-   select  /*+ FULL(b29)  parallel (b29,4)  */  *   from bskt29  b29
-   union all
-   select  /*+ FULL(b30)  parallel (b30,4)  */  *   from bskt30  b30
-   union all
-   select  /*+ FULL(b31)  parallel (b31,4)  */  *   from bskt31  b31
-   union all
-   select  /*+ FULL(b32)  parallel (b32,4)  */  *   from bskt32  b32
-   union all
-   select  /*+ FULL(b33)  parallel (b33,4)  */  *   from bskt33  b33
-   union all
-   select  /*+ FULL(b34)  parallel (b34,4)  */  *   from bskt34  b34
-   union all
-   select  /*+ FULL(b35)  parallel (b35,4)  */  *   from bskt35  b35
-   union all
-   select  /*+ FULL(b36)  parallel (b36,4)  */  *   from bskt36  b36
-   )         
-   select /*+ FULL(cua)  parallel (cua,8)  */
-            g_yr_00,g_mn_00,
-            primary_customer_identifier,
-            company_no,
-            max(customer_no) customer_no,
-            sum(item_01),sum(sales_01),sum(visit_01),
-            sum(item_02),sum(sales_02),sum(visit_02),
-            sum(item_03),sum(sales_03),sum(visit_03),
-            sum(item_04),sum(sales_04),sum(visit_04),
-            sum(item_05),sum(sales_05),sum(visit_05),
-            sum(item_06),sum(sales_06),sum(visit_06),
-            sum(item_07),sum(sales_07),sum(visit_07),
-            sum(item_08),sum(sales_08),sum(visit_08),
-            sum(item_09),sum(sales_09),sum(visit_09),
-            sum(item_10),sum(sales_10),sum(visit_10),
-            sum(item_11),sum(sales_11),sum(visit_11),
-            sum(item_12),sum(sales_12),sum(visit_12),
-            sum(item_13),sum(sales_13),sum(visit_13),
-            sum(item_14),sum(sales_14),sum(visit_14),
-            sum(item_15),sum(sales_15),sum(visit_15),
-            sum(item_16),sum(sales_16),sum(visit_16),
-            sum(item_17),sum(sales_17),sum(visit_17),
-            sum(item_18),sum(sales_18),sum(visit_18),
-            sum(item_19),sum(sales_19),sum(visit_19),
-            sum(item_20),sum(sales_20),sum(visit_20),
-            sum(item_21),sum(sales_21),sum(visit_21),
-            sum(item_22),sum(sales_22),sum(visit_22),
-            sum(item_23),sum(sales_23),sum(visit_23),
-            sum(item_24),sum(sales_24),sum(visit_24),
-            sum(item_25),sum(sales_25),sum(visit_25),
-            sum(item_26),sum(sales_26),sum(visit_26),
-            sum(item_27),sum(sales_27),sum(visit_27),
-            sum(item_28),sum(sales_28),sum(visit_28),
-            sum(item_29),sum(sales_29),sum(visit_29),
-            sum(item_30),sum(sales_30),sum(visit_30),
-            sum(item_31),sum(sales_31),sum(visit_31),
-            sum(item_32),sum(sales_32),sum(visit_32),
-            sum(item_33),sum(sales_33),sum(visit_33),
-            sum(item_34),sum(sales_34),sum(visit_34),
-            sum(item_35),sum(sales_35),sum(visit_35),
-            sum(item_36),sum(sales_36),sum(visit_36),
-            g_date
-   from     cust_union_all cua
-   group by primary_customer_identifier,company_no
-   ;
-
-   COMMIT;
-   l_text := 'FORTH TEMP TABLE WRITTEN FOR 9 MONTHS DATA'; 
-   dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
-   
-   l_text := 'UPDATE STATS ON TEMP TABLES'; 
-   dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
- 
-   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','TEMP_DB_COMPANY_MONTH_1',estimate_percent=>1, DEGREE => 32);
-   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','TEMP_DB_COMPANY_MONTH_2',estimate_percent=>1, DEGREE => 32);
-   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','TEMP_DB_COMPANY_MONTH_3',estimate_percent=>1, DEGREE => 32);
-   DBMS_STATS.gather_table_stats ('DWH_CUST_PERFORMANCE','TEMP_DB_COMPANY_MONTH_4',estimate_percent=>1, DEGREE => 32);
-
-   COMMIT;
    l_text := 'MAIN INSERT START'; 
    dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);   
    
-   insert /*+ APPEND parallel (prf,12) */ into cust_db_company_month  prf
-   with        cust_union_all as
-   (
-   select  /*+ FULL(t1)  parallel (t1,8)  */  *   from temp_db_company_month_1  t1
-   union all
-   select  /*+ FULL(t2)  parallel (t2,8)  */  *   from temp_db_company_month_2  t2
-   union all
-   select  /*+ FULL(t3)  parallel (t3,8)  */  *   from temp_db_company_month_3  t3
-   union all
-   select  /*+ FULL(t4)  parallel (t4,8)  */  *   from temp_db_company_month_4  t4
-   )         
-   select /*+ FULL(cua)  parallel (cua,8)  */
-            g_yr_00,g_mn_00,
-            primary_customer_identifier,
-            company_no,
-            max(customer_no) customer_no,
-            sum(	num_item_101	),
-            sum(	sales_101	),
-            sum(	num_visit_101	),
-            sum(	num_item_102	),
-            sum(	sales_102	),
-            sum(	num_visit_102	),
-            sum(	num_item_103	),
-            sum(	sales_103	),
-            sum(	num_visit_103	),
-            sum(	num_item_104	),
-            sum(	sales_104	),
-            sum(	num_visit_104	),
-            sum(	num_item_105	),
-            sum(	sales_105	),
-            sum(	num_visit_105	),
-            sum(	num_item_106	),
-            sum(	sales_106	),
-            sum(	num_visit_106	),
-            sum(	num_item_107	),
-            sum(	sales_107	),
-            sum(	num_visit_107	),
-            sum(	num_item_108	),
-            sum(	sales_108	),
-            sum(	num_visit_108	),
-            sum(	num_item_109	),
-            sum(	sales_109	),
-            sum(	num_visit_109	),
-            sum(	num_item_110	),
-            sum(	sales_110	),
-            sum(	num_visit_110	),
-            sum(	num_item_111	),
-            sum(	sales_111	),
-            sum(	num_visit_111	),
-            sum(	num_item_112	),
-            sum(	sales_112	),
-            sum(	num_visit_112	),
-            sum(	num_item_201	),
-            sum(	sales_201	),
-            sum(	num_visit_201	),
-            sum(	num_item_202	),
-            sum(	sales_202	),
-            sum(	num_visit_202	),
-            sum(	num_item_203	),
-            sum(	sales_203	),
-            sum(	num_visit_203	),
-            sum(	num_item_204	),
-            sum(	sales_204	),
-            sum(	num_visit_204	),
-            sum(	num_item_205	),
-            sum(	sales_205	),
-            sum(	num_visit_205	),
-            sum(	num_item_206	),
-            sum(	sales_206	),
-            sum(	num_visit_206	),
-            sum(	num_item_207	),
-            sum(	sales_207	),
-            sum(	num_visit_207	),
-            sum(	num_item_208	),
-            sum(	sales_208	),
-            sum(	num_visit_208	),
-            sum(	num_item_209	),
-            sum(	sales_209	),
-            sum(	num_visit_209	),
-            sum(	num_item_210	),
-            sum(	sales_210	),
-            sum(	num_visit_210	),
-            sum(	num_item_211	),
-            sum(	sales_211	),
-            sum(	num_visit_211	),
-            sum(	num_item_212	),
-            sum(	sales_212	),
-            sum(	num_visit_212	),
-            sum(	num_item_301	),
-            sum(	sales_301	),
-            sum(	num_visit_301	),
-            sum(	num_item_302	),
-            sum(	sales_302	),
-            sum(	num_visit_302	),
-            sum(	num_item_303	),
-            sum(	sales_303	),
-            sum(	num_visit_303	),
-            sum(	num_item_304	),
-            sum(	sales_304	),
-            sum(	num_visit_304	),
-            sum(	num_item_305	),
-            sum(	sales_305	),
-            sum(	num_visit_305	),
-            sum(	num_item_306	),
-            sum(	sales_306	),
-            sum(	num_visit_306	),
-            sum(	num_item_307	),
-            sum(	sales_307	),
-            sum(	num_visit_307	),
-            sum(	num_item_308	),
-            sum(	sales_308	),
-            sum(	num_visit_308	),
-            sum(	num_item_309	),
-            sum(	sales_309	),
-            sum(	num_visit_309	),
-            sum(	num_item_310	),
-            sum(	sales_310	),
-            sum(	num_visit_310	),
-            sum(	num_item_311	),
-            sum(	sales_311	),
-            sum(	num_visit_311	),
-            sum(	num_item_312	),
-            sum(	sales_312	),
-            sum(	num_visit_312	),
-            g_date
-   from     cust_union_all cua
-   group by primary_customer_identifier,company_no
-   ;
-   
-   
+   insert /*+ APPEND parallel (prf,4) */ into cust_db_company_month  prf
+   with bskt_det as (
+         select  /*+ full(cbi) parallel(8) no_gather_optimizer_statistics */
+                  primary_customer_identifier,
+                  di.company_no,
+                  customer_no,
+                  case when tran_date between date_from(1) and date_to(1) then 1
+                       when tran_date between date_from(2) and date_to(2) then 2
+                       when tran_date between date_from(3) and date_to(3) then 3
+                       when tran_date between date_from(4) and date_to(4) then 4
+                       when tran_date between date_from(5) and date_to(5) then 5
+                       when tran_date between date_from(6) and date_to(6) then 6
+                       when tran_date between date_from(7) and date_to(7) then 7
+                       when tran_date between date_from(8) and date_to(8) then 8
+                       when tran_date between date_from(9) and date_to(9) then 9
+                       when tran_date between date_from(10) and date_to(10) then 10
+                       when tran_date between date_from(11) and date_to(11) then 11
+                       when tran_date between date_from(12) and date_to(12) then 12
+                       when tran_date between date_from(13) and date_to(13) then 13
+                       when tran_date between date_from(14) and date_to(14) then 14
+                       when tran_date between date_from(15) and date_to(15) then 15
+                       when tran_date between date_from(16) and date_to(16) then 16
+                       when tran_date between date_from(17) and date_to(17) then 17
+                       when tran_date between date_from(18) and date_to(18) then 18
+                       when tran_date between date_from(19) and date_to(19) then 19
+                       when tran_date between date_from(20) and date_to(20) then 20
+                       when tran_date between date_from(21) and date_to(21) then 21
+                       when tran_date between date_from(22) and date_to(22) then 22
+                       when tran_date between date_from(23) and date_to(23) then 23
+                       when tran_date between date_from(24) and date_to(24) then 24
+                       when tran_date between date_from(25) and date_to(25) then 25
+                       when tran_date between date_from(26) and date_to(26) then 26
+                       when tran_date between date_from(27) and date_to(27) then 27
+                       when tran_date between date_from(28) and date_to(28) then 28
+                       when tran_date between date_from(29) and date_to(29) then 29
+                       when tran_date between date_from(30) and date_to(30) then 30
+                       when tran_date between date_from(31) and date_to(31) then 31
+                       when tran_date between date_from(32) and date_to(32) then 32
+                       when tran_date between date_from(33) and date_to(33) then 33
+                       when tran_date between date_from(34) and date_to(34) then 34
+                       when tran_date between date_from(35) and date_to(35) then 35
+                       when tran_date between date_from(36) and date_to(36) then 36
+                  end mnth,
+                  item_tran_qty,
+                  item_tran_selling,
+                  discount_selling,
+                  tran_no||tran_date||till_no||location_no visit
+         from     cust_basket_item cbi,
+                  dim_item di
+         where    tran_date between date_from(36) and date_to(1) and  
+                  cbi.item_no  = di.item_no and
+                  tran_type in ('S','V','R') and
+                  primary_customer_identifier is not null and
+                  primary_customer_identifier <> 0  and
+                  primary_customer_identifier not between 6007851400000000 and 6007851499999999),
+      bskt_bd as (
+         select   primary_customer_identifier,
+                  company_no,
+                  max(customer_no) customer_no,
+                  mnth,
+                  sum(item_tran_qty) item,
+                  sum(item_tran_selling - discount_selling) sales,
+                  count(distinct visit) visit
+         from     bskt_det
+         group by primary_customer_identifier, company_no, mnth),
+      pvt as (
+         select   primary_customer_identifier,
+                  company_no,
+                  customer_no,
+                  NVL("1_ITEM",0) ITEM_01,NVL("1_SALES",0) SALES_01, NVL("1_VISIT",0) VISIT_01,
+                  NVL("2_ITEM",0) ITEM_02,NVL("2_SALES",0) SALES_02, NVL("2_VISIT",0) VISIT_02,
+                  NVL("3_ITEM",0) ITEM_03,NVL("3_SALES",0) SALES_03, NVL("3_VISIT",0) VISIT_03,
+                  NVL("4_ITEM",0) ITEM_04,NVL("4_SALES",0) SALES_04, NVL("4_VISIT",0) VISIT_04,
+                  NVL("5_ITEM",0) ITEM_05,NVL("5_SALES",0) SALES_05, NVL("5_VISIT",0) VISIT_05,
+                  NVL("6_ITEM",0) ITEM_06,NVL("6_SALES",0) SALES_06, NVL("6_VISIT",0) VISIT_06,
+                  NVL("7_ITEM",0) ITEM_07,NVL("7_SALES",0) SALES_07, NVL("7_VISIT",0) VISIT_07,
+                  NVL("8_ITEM",0) ITEM_08,NVL("8_SALES",0) SALES_08, NVL("8_VISIT",0) VISIT_08,
+                  NVL("9_ITEM",0) ITEM_09,NVL("9_SALES",0) SALES_09, NVL("9_VISIT",0) VISIT_09,
+                  NVL("10_ITEM",0) ITEM_10,NVL("10_SALES",0) SALES_10, NVL("10_VISIT",0) VISIT_10,
+                  NVL("11_ITEM",0) ITEM_11,NVL("11_SALES",0) SALES_11, NVL("11_VISIT",0) VISIT_11,
+                  NVL("12_ITEM",0) ITEM_12,NVL("12_SALES",0) SALES_12, NVL("12_VISIT",0) VISIT_12,
+                  NVL("13_ITEM",0) ITEM_13,NVL("13_SALES",0) SALES_13, NVL("13_VISIT",0) VISIT_13,
+                  NVL("14_ITEM",0) ITEM_14,NVL("14_SALES",0) SALES_14, NVL("14_VISIT",0) VISIT_14,
+                  NVL("15_ITEM",0) ITEM_15,NVL("15_SALES",0) SALES_15, NVL("15_VISIT",0) VISIT_15,
+                  NVL("16_ITEM",0) ITEM_16,NVL("16_SALES",0) SALES_16, NVL("16_VISIT",0) VISIT_16,
+                  NVL("17_ITEM",0) ITEM_17,NVL("17_SALES",0) SALES_17, NVL("17_VISIT",0) VISIT_17,
+                  NVL("18_ITEM",0) ITEM_18,NVL("18_SALES",0) SALES_18, NVL("18_VISIT",0) VISIT_18,
+                  NVL("19_ITEM",0) ITEM_19,NVL("19_SALES",0) SALES_19, NVL("19_VISIT",0) VISIT_19,
+                  NVL("20_ITEM",0) ITEM_20,NVL("20_SALES",0) SALES_20, NVL("20_VISIT",0) VISIT_20,
+                  NVL("21_ITEM",0) ITEM_21,NVL("21_SALES",0) SALES_21, NVL("21_VISIT",0) VISIT_21,
+                  NVL("22_ITEM",0) ITEM_22,NVL("22_SALES",0) SALES_22, NVL("22_VISIT",0) VISIT_22,
+                  NVL("23_ITEM",0) ITEM_23,NVL("23_SALES",0) SALES_23, NVL("23_VISIT",0) VISIT_23,
+                  NVL("24_ITEM",0) ITEM_24,NVL("24_SALES",0) SALES_24, NVL("24_VISIT",0) VISIT_24,
+                  NVL("25_ITEM",0) ITEM_25,NVL("25_SALES",0) SALES_25, NVL("25_VISIT",0) VISIT_25,
+                  NVL("26_ITEM",0) ITEM_26,NVL("26_SALES",0) SALES_26, NVL("26_VISIT",0) VISIT_26,
+                  NVL("27_ITEM",0) ITEM_27,NVL("27_SALES",0) SALES_27, NVL("27_VISIT",0) VISIT_27,
+                  NVL("28_ITEM",0) ITEM_28,NVL("28_SALES",0) SALES_28, NVL("28_VISIT",0) VISIT_28,
+                  NVL("29_ITEM",0) ITEM_29,NVL("29_SALES",0) SALES_29, NVL("29_VISIT",0) VISIT_29,
+                  NVL("30_ITEM",0) ITEM_30,NVL("30_SALES",0) SALES_30, NVL("30_VISIT",0) VISIT_30,
+                  NVL("31_ITEM",0) ITEM_31,NVL("31_SALES",0) SALES_31, NVL("31_VISIT",0) VISIT_31,
+                  NVL("32_ITEM",0) ITEM_32,NVL("32_SALES",0) SALES_32, NVL("32_VISIT",0) VISIT_32,
+                  NVL("33_ITEM",0) ITEM_33,NVL("33_SALES",0) SALES_33, NVL("33_VISIT",0) VISIT_33,
+                  NVL("34_ITEM",0) ITEM_34,NVL("34_SALES",0) SALES_34, NVL("34_VISIT",0) VISIT_34,
+                  NVL("35_ITEM",0) ITEM_35,NVL("35_SALES",0) SALES_35, NVL("35_VISIT",0) VISIT_35,
+                  NVL("36_ITEM",0) ITEM_36,NVL("36_SALES",0) SALES_36, NVL("36_VISIT",0) VISIT_36
+      from bskt_bd
+      pivot (sum(item) as item, sum(sales) as sales, sum(visit) as visit
+             for mnth in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36)))
+   select g_yr_00,g_mn_00,
+          primary_customer_identifier,
+          company_no,
+          max(customer_no) customer_no,
+          sum(item_01) item_01, sum(sales_01) sales_01, sum(visit_01) visit_01,
+          sum(item_02) item_02, sum(sales_02) sales_02, sum(visit_02) visit_02,
+          sum(item_03) item_03, sum(sales_03) sales_03, sum(visit_03) visit_03,
+          sum(item_04) item_04, sum(sales_04) sales_04, sum(visit_04) visit_04,
+          sum(item_05) item_05, sum(sales_05) sales_05, sum(visit_05) visit_05,
+          sum(item_06) item_06, sum(sales_06) sales_06, sum(visit_06) visit_06,
+          sum(item_07) item_07, sum(sales_07) sales_07, sum(visit_07) visit_07,
+          sum(item_08) item_08, sum(sales_08) sales_08, sum(visit_08) visit_08,
+          sum(item_09) item_09, sum(sales_09) sales_09, sum(visit_09) visit_09,
+          sum(item_10) item_10, sum(sales_10) sales_10, sum(visit_10) visit_10,
+          sum(item_11) item_11, sum(sales_11) sales_11, sum(visit_11) visit_11,
+          sum(item_12) item_12, sum(sales_12) sales_12, sum(visit_12) visit_12,
+          sum(item_13) item_13, sum(sales_13) sales_13, sum(visit_13) visit_13,
+          sum(item_14) item_14, sum(sales_14) sales_14, sum(visit_14) visit_14,
+          sum(item_15) item_15, sum(sales_15) sales_15, sum(visit_15) visit_15,
+          sum(item_16) item_16, sum(sales_16) sales_16, sum(visit_16) visit_16,
+          sum(item_17) item_17, sum(sales_17) sales_17, sum(visit_17) visit_17,
+          sum(item_18) item_18, sum(sales_18) sales_18, sum(visit_18) visit_18,
+          sum(item_19) item_19, sum(sales_19) sales_19, sum(visit_19) visit_19,
+          sum(item_20) item_20, sum(sales_20) sales_20, sum(visit_20) visit_20,
+          sum(item_21) item_21, sum(sales_21) sales_21, sum(visit_21) visit_21,
+          sum(item_22) item_22, sum(sales_22) sales_22, sum(visit_22) visit_22,
+          sum(item_23) item_23, sum(sales_23) sales_23, sum(visit_23) visit_23,
+          sum(item_24) item_24, sum(sales_24) sales_24, sum(visit_24) visit_24,
+          sum(item_25) item_25, sum(sales_25) sales_25, sum(visit_25) visit_25,
+          sum(item_26) item_26, sum(sales_26) sales_26, sum(visit_26) visit_26,
+          sum(item_27) item_27, sum(sales_27) sales_27, sum(visit_27) visit_27,
+          sum(item_28) item_28, sum(sales_28) sales_28, sum(visit_28) visit_28,
+          sum(item_29) item_29, sum(sales_29) sales_29, sum(visit_29) visit_29,
+          sum(item_30) item_30, sum(sales_30) sales_30, sum(visit_30) visit_30,
+          sum(item_31) item_31, sum(sales_31) sales_31, sum(visit_31) visit_31,
+          sum(item_32) item_32, sum(sales_32) sales_32, sum(visit_32) visit_32,
+          sum(item_33) item_33, sum(sales_33) sales_33, sum(visit_33) visit_33,
+          sum(item_34) item_34, sum(sales_34) sales_34, sum(visit_34) visit_34,
+          sum(item_35) item_35, sum(sales_35) sales_35, sum(visit_35) visit_35,
+          sum(item_36) item_36, sum(sales_36) sales_36, sum(visit_36) visit_36,
+          g_date
+     from pvt 
+   group by primary_customer_identifier,
+            company_no;
+  
    g_recs_inserted         := g_recs_inserted + sql%rowcount;
    commit;
 
@@ -1616,17 +341,6 @@ begin
 
    COMMIT;
    
-    l_text      := 'TRUNCATE ALL TEMP TABLES';
-    dwh_log.write_log(l_name,l_system_name,l_script_name,l_procedure_name,l_text);
-   
-    g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.TEMP_DB_COMPANY_MONTH_1';
-    execute immediate g_stmt; 
-    g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.TEMP_DB_COMPANY_MONTH_2';
-    execute immediate g_stmt; 
-    g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.TEMP_DB_COMPANY_MONTH_3';
-    execute immediate g_stmt; 
-    g_stmt      := 'TRUNCATE table  DWH_CUST_PERFORMANCE.TEMP_DB_COMPANY_MONTH_4';
-    execute immediate g_stmt;     
 --************************************************************************************************** 
 -- At end write out log totals
 --**************************************************************************************************
