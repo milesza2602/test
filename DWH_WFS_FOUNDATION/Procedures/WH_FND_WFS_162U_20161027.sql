@@ -19,7 +19,7 @@ AS
   -- Maintenance:
   --  2016-03-11 N Chauhan - added 14 more fields for NCA compliance.
   --  2016-03-15 N Chauhan - added 4 more fields to take off dependency on Informix.
-  --
+  --   Add a comment to test check-in
   --
   -- Note: This version Attempts to do a bulk insert / update / hospital. Downside is that hospital message is generic!!
   --       This would be appropriate for large loads where most of the data is for Insert like with Sales transactions.
@@ -672,3 +672,5 @@ WHEN OTHERS THEN
   p_success := false;
   RAISE;
 END WH_FND_WFS_162U_20161027;
+/
+show errors
