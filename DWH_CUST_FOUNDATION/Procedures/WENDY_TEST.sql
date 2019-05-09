@@ -12,3 +12,5 @@ BEGIN
 execute immediate g_sql;
 commit;
 END WENDY_TEST;
+/
+show errors
