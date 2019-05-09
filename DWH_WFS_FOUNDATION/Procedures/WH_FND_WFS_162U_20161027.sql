@@ -672,3 +672,5 @@ WHEN OTHERS THEN
   p_success := false;
   RAISE;
 END WH_FND_WFS_162U_20161027;
+/
+show errors
