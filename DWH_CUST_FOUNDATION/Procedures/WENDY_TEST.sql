@@ -9,6 +9,7 @@ BEGIN
 --g_sql := ('drop TABLE DWH_FOUNDATION.FND_WOD_PROM_DISCOUNT');
 --make a change to test release
 --20190509
+--add a comment - 20190509 
 execute immediate g_sql;
 commit;
 END WENDY_TEST;
