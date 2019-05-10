@@ -15,6 +15,7 @@ set define off;
 --
 --  Maintenance:
 --  17 oct 2013 - wendy  - add in execute immediate 'alter session enable parallel dml';
+--  2019-05-10 - Paul W - Altered hints in cursor to improve query performance
 --
 --  Naming conventions
 --  g_  -  Global variable
@@ -59,7 +60,7 @@ a_count_m          integer       := 0;
 a_count_u           integer       := 0;
 
 cursor c_fnd_mc_loc_item_dy_rms_sale is
-   select /*+ full(di) full(dl) full(dih) full(dil) full(DLH) full(FND_LI) full(dd) parallel (FND_LI,6) */ 
+   select /*+ parallel (FND_LID,6) */ 
           fnd_lid.*,
           di.standard_uom_code,di.business_unit_no,di.vat_rate_perc,di.sk1_department_no,di.sk1_item_no,
           dl.chain_no,dl.sk1_location_no,
