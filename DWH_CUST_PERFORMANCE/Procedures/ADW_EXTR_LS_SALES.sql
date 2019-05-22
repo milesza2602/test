@@ -2,7 +2,7 @@
 --  DDL for Procedure ADW_EXTR_LS_SALES
 --------------------------------------------------------
 set define off;
-
+-- JUST ADD A COMMENT
   CREATE OR REPLACE PROCEDURE "DWH_CUST_PERFORMANCE"."ADW_EXTR_LS_SALES" 
 (p_forall_limit in integer,p_success out boolean)
 as
