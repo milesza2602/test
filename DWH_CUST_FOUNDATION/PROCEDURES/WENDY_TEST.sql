@@ -1,12 +1,20 @@
 --------------------------------------------------------
 --  DDL for Procedure WENDY_TEST
 --------------------------------------------------------
-set define off;
+SET DEFINE OFF;
 
-  CREATE OR REPLACE PROCEDURE "DWH_CUST_FOUNDATION"."WENDY_TEST" AS 
-g_sql            varchar2(8000);
+CREATE OR REPLACE PROCEDURE "DWH_CUST_FOUNDATION"."WENDY_TEST" AS
+    g_sql   VARCHAR2(8000);
 BEGIN
+-- added a comment - mdm
+-- added a comment - mdm - 23 may 2019 17h44
 --g_sql := ('drop TABLE DWH_FOUNDATION.FND_WOD_PROM_DISCOUNT');
-execute immediate g_sql;
-commit;
-END WENDY_TEST;
+--make a change to test release
+--20190509
+--add a comment - 20190509 
+    EXECUTE IMMEDIATE g_sql;
+    COMMIT;
+END wendy_test;
+/
+
+SHOW ERRORS
