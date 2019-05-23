@@ -26,7 +26,7 @@ set define off;
 --  a_  -  Array variable
 --  v_  -  Local variable as found in packages
 --  p_  -  Parameter
---  c_  -  Prefix to cursor
+--  c_  -  Prefix to cursor.
 --**************************************************************************************************
 
 g_recs_read          integer       :=  0;
