@@ -7,6 +7,7 @@ CREATE OR REPLACE PROCEDURE "DWH_CUST_FOUNDATION"."WENDY_TEST" AS
     g_sql   VARCHAR2(8000);
 BEGIN
 -- added a comment - mdm
+-- added a comment - mdm - 23 may 2019 17h44
 --g_sql := ('drop TABLE DWH_FOUNDATION.FND_WOD_PROM_DISCOUNT');
 --make a change to test release
 --20190509
