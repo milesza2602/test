@@ -17,7 +17,8 @@ set define off;
 --
 --  Maintenance:
 --  08 Sept 2010 - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
---
+-- test todays change 16:34pm
+-- put in another change to testcommand line copy
 
 --  Naming conventions
 --  g_  -  Global variable
@@ -435,3 +436,5 @@ begin
        raise;
 
 END WH_FND_CUST_010U;
+/
+show errors
